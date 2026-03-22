@@ -60,11 +60,9 @@ https://winterboard.pl/
 const partneringUsers = new Map();
 const partnershipTimestamps = new Map();
 
-// ✅ ZMIANA: cooldown 5 dni zamiast 7
 const PARTNERSHIP_COOLDOWN = 5 * 24 * 60 * 60 * 1000;
-
-// ✅ ZMIANA: ID kanału do wysyłania reklam partnerów
-const PARTNER_CHANNEL_ID = '1485238096319746049';
+const PARTNER_CHANNEL_ID = '1442908672899547187';
+const GUILD_ID = '1484858033887510560';
 
 client.on('messageCreate', async (message) => {
   if (!message.guild && !message.author.bot && message.author.id !== client.user.id) {
@@ -102,26 +100,22 @@ client.on('messageCreate', async (message) => {
           await notificationUser.send(`Wymagane dołączenie na serwer:\n${userAd}`);
         }
 
-        const guild = client.guilds.cache.get('1484858033887510560');
+        const guild = await client.guilds.fetch(GUILD_ID).catch(() => null);
         if (!guild) {
           await message.channel.send("❕ Nie znaleziono serwera.");
           return;
         }
 
         const member = await guild.members.fetch(message.author.id).catch(() => null);
-        if (!member) {
-          await message.channel.send("❕ Dołącz na serwer, aby kontynuować!");
-          return;
-        }
 
-        // ✅ ZMIANA: szukanie kanału po ID zamiast po nazwie
-        const channel = guild.channels.cache.get(PARTNER_CHANNEL_ID);
+        const channel = await guild.channels.fetch(PARTNER_CHANNEL_ID).catch(() => null);
         if (!channel) {
           await message.channel.send("Nie znaleziono kanału partnerskiego.");
           return;
         }
 
-        await channel.send(`${userAd}\n\nPartnerstwo z: ${member}`);
+        const memberMention = member ? `${member}` : message.author.username;
+        await channel.send(`${userAd}\n\nPartnerstwo z: ${memberMention}`);
         await message.channel.send("✅ Dziękujemy za partnerstwo! W razie jakichkolwiek pytań prosimy o kontakt z użytkownikiem .b_r_tech. (bRtech)");
 
         partnershipTimestamps.set(message.author.id, now);
@@ -134,8 +128,7 @@ client.on('messageCreate', async (message) => {
 client.on('guildMemberAdd', async (member) => {
   if (partneringUsers.has(member.id)) {
     const userAd = partneringUsers.get(member.id);
-    // ✅ ZMIANA: szukanie kanału po ID zamiast po nazwie
-    const channel = member.guild.channels.cache.get(PARTNER_CHANNEL_ID);
+    const channel = await member.guild.channels.fetch(PARTNER_CHANNEL_ID).catch(() => null);
     if (channel) {
       await channel.send(`${userAd}\n\nPartnerstwo z: ${member}`);
       const dmChannel = await member.createDM();
