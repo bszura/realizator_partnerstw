@@ -9,6 +9,11 @@ const client = new Client({
   checkUpdate: false,
 });
 
+const client = new Client({
+  checkUpdate: false,
+  readyStatus: false,  // ← dodaj tę linię
+});
+
 // Serwer HTTP do utrzymania aktywności na Render
 app.get('/', (req, res) => {
   res.send('Self-bot działa na Render! 🚀');
