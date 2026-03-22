@@ -7,11 +7,7 @@ const Discord = require('discord.js-selfbot-v13');
 
 const client = new Client({
   checkUpdate: false,
-});
-
-const client = new Client({
-  checkUpdate: false,
-  readyStatus: false,  // ← dodaj tę linię
+  readyStatus: false,
 });
 
 // Serwer HTTP do utrzymania aktywności na Render
@@ -63,7 +59,6 @@ Strona naszego serwera:
 https://winterboard.pl/
 `;
 
-// Lista użytkowników partnerstwa i ich czas ostatniego partnerstwa
 const partneringUsers = new Map();
 const partnershipTimestamps = new Map();
 
