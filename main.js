@@ -61,7 +61,7 @@ const partneringUsers = new Map();
 const partnershipTimestamps = new Map();
 
 const PARTNERSHIP_COOLDOWN = 5 * 24 * 60 * 60 * 1000;
-const PARTNER_CHANNEL_ID = '1485238096319746049';
+const PARTNER_CHANNEL_ID = '1442908672899547187';
 const GUILD_ID = '1484858033887510560';
 
 client.on('messageCreate', async (message) => {
@@ -94,25 +94,32 @@ client.on('messageCreate', async (message) => {
         const filter = m => m.author.id === message.author.id;
         const reply = await message.channel.awaitMessages({ filter, max: 1, time: 60000, errors: ['time'] }).catch(() => null);
 
+        console.log('Odpowiedź na pytanie o dołączenie:', reply ? reply.first().content : 'brak odpowiedzi');
+
         if (reply && !reply.first().content.toLowerCase().includes('nie')) {
           await message.channel.send("Mój właściciel @bRtech za niedługo na pewno dołączy do twojego serwera");
           const notificationUser = await client.users.fetch('782647700403257375');
           await notificationUser.send(`Wymagane dołączenie na serwer:\n${userAd}`);
         }
 
-        const guild = await client.guilds.fetch(GUILD_ID).catch(() => null);
+        console.log('Szukam guild o ID:', GUILD_ID);
+        const guild = await client.guilds.fetch(GUILD_ID).catch((e) => { console.error('Błąd guild:', e); return null; });
         if (!guild) {
           await message.channel.send("❕ Nie znaleziono serwera.");
           return;
         }
+        console.log('Guild znaleziony:', guild.name);
 
-        const member = await guild.members.fetch(message.author.id).catch(() => null);
+        const member = await guild.members.fetch(message.author.id).catch((e) => { console.error('Błąd member:', e); return null; });
+        console.log('Member:', member ? member.displayName : 'nie na serwerze');
 
-        const channel = await guild.channels.fetch(PARTNER_CHANNEL_ID).catch(() => null);
+        console.log('Szukam kanału o ID:', PARTNER_CHANNEL_ID);
+        const channel = await guild.channels.fetch(PARTNER_CHANNEL_ID).catch((e) => { console.error('Błąd channel:', e); return null; });
         if (!channel) {
           await message.channel.send("Nie znaleziono kanału partnerskiego.");
           return;
         }
+        console.log('Kanał znaleziony:', channel.name);
 
         const memberMention = member ? `${member}` : message.author.username;
         await channel.send(`${userAd}\n\nPartnerstwo z: ${memberMention}`);
