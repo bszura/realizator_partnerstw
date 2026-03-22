@@ -4,12 +4,12 @@ const express = require('express');
 const app = express();
 const PORT = 8080;
 const Discord = require('discord.js-selfbot-v13');
-// Konfiguracja klienta Discord
+
 const client = new Client({
   checkUpdate: false,
 });
 
-// Serwer HTTP do utrzymania aktywności na Render (dla darmowego tieru)
+// Serwer HTTP do utrzymania aktywności na Render
 app.get('/', (req, res) => {
   res.send('Self-bot działa na Render! 🚀');
 });
@@ -18,12 +18,12 @@ app.listen(PORT, () => {
   console.log(`Serwer pingujący działa na porcie ${PORT}`);
 });
 
-// Obsługa zdarzeń Discorda
 client.once('ready', () => {
   console.log(`Zalogowano jako ${client.user.tag}!`);
+  console.log(`Bot ${client.user.tag} jest gotowy.`);
 });
 
-// Reklama serwera
+// Reklama serwera (używana w systemie partnerstwa)
 const serverAd = `
 # 🌨️❄️ 𝒁𝒊𝒎𝒐𝒘𝒆 ⛄ 𝑹𝒆𝒌𝒍𝒂𝒎𝒚 ❄️🌨️
 > ✩ Poszukujesz idealnego serwera *reklamowego*, na którym widnieje wspaniała społeczność?
@@ -62,57 +62,12 @@ https://winterboard.pl/
 const partneringUsers = new Map();
 const partnershipTimestamps = new Map();
 
-client.once('ready', () => {
-  console.log(`Bot ${client.user.tag} jest gotowy.`);
-  // Wysyłanie wiadomości co 6 minut
-  const channelId_partnerstwa = '1346609247869337701';
-  const serverId = '1348273862365941780';
-  setInterval(async () => {
-    const channel = client.channels.cache.get(channelId_partnerstwa);
-    if (channel) {
-      await channel.send('# PARTNERSTWA PV');
-    } else {
-      console.error(`Nie znaleziono kanału o ID ${channelId_partnerstwa}`);
-    }
-  }, 6 * 60 * 1000); // 6 minut w milisekundach
-
-  // reklamowanie serwera
-  const channelId_programming = '1346609292425429194';
-  const channelId_global = '1348329636056268911';
-  const zimoweall = '1346609268375158834';
-  const zimowethematic = '1346609283932094529';
-  const zimowetech = '1346609290332602420';
-  const zimowe6h = '1346609312042324060';
-  setInterval(async () => {
-    const channel = client.channels.cache.get(channelId_programming);
-    const channel_global = client.channels.cache.get(channelId_global);
-    const zimoweall1 = client.channels.cache.get(zimoweall);
-    const zimowethematic1 = client.channels.cache.get(zimowethematic);
-    const zimowetech1 = client.channels.cache.get(zimowetech);
-    const zimowe6h1 = client.channels.cache.get(zimowe6h);
-    if (channel) {
-      await channel.send(serverAd);
-      await channel_global.send(serverAd);
-      await zimoweall1.send(serverAd);
-      await zimowethematic1.send(serverAd);
-      await zimowetech1.send(serverAd);
-    } else {
-      console.error(`Nie znaleziono kanału o ID ${channelId_programming}`);
-    }
-  }, 11 * 60 * 1000); // 11 minut w milisekundach
-});
-
-
-
-
 client.on('messageCreate', async (message) => {
-  // Sprawdzenie, czy wiadomość pochodzi od innego użytkownika
   if (!message.guild && !message.author.bot && message.author.id !== client.user.id) {
     const now = Date.now();
     const lastPartnership = partnershipTimestamps.get(message.author.id);
 
     if (lastPartnership && now - lastPartnership < 7 * 24 * 60 * 60 * 1000) {
-      // Jeśli użytkownik chce nawiązać partnerstwo wcześniej niż tydzień, wyślij wiadomość
       await message.channel.send("⏳ Musisz jeszcze poczekać, zanim będziesz mógł nawiązać kolejne partnerstwo. Spróbuj ponownie za tydzień.");
       return;
     }
@@ -127,8 +82,12 @@ client.on('messageCreate', async (message) => {
         partneringUsers.set(message.author.id, message.content);
         await message.channel.send(`✅ Wstaw naszą reklamę:\n${serverAd}`);
         await message.channel.send("⏰ Daj znać, gdy wstawisz reklamę!");
-      } else if (message.content.toLowerCase().includes('wstawi') || message.content.toLowerCase().includes('już') || message.content.toLowerCase().includes('gotowe') || message.content.toLowerCase().includes('juz')) {
-        // Dodajemy pytanie o dołączenie na serwer
+      } else if (
+        message.content.toLowerCase().includes('wstawi') ||
+        message.content.toLowerCase().includes('już') ||
+        message.content.toLowerCase().includes('gotowe') ||
+        message.content.toLowerCase().includes('juz')
+      ) {
         await message.channel.send("Czy wymagane jest dołączenie na twój serwer?");
         const filter = m => m.author.id === message.author.id;
         const reply = await message.channel.awaitMessages({ filter, max: 1, time: 60000, errors: ['time'] }).catch(() => null);
@@ -157,7 +116,6 @@ client.on('messageCreate', async (message) => {
           return;
         }
 
-        const displayName = member ? member.displayName : message.author.username;
         await channel.send(`${userAd}\n\nPartnerstwo z: ${member}`);
         await message.channel.send("✅ Dziękujemy za partnerstwo! W razie jakichkolwiek pytań prosimy o kontakt z użytkownikiem .b_r_tech. (bRtech)");
 
@@ -168,30 +126,22 @@ client.on('messageCreate', async (message) => {
   }
 });
 
-// Obsługa zdarzeń, kiedy użytkownik dołącza na serwer
 client.on('guildMemberAdd', async (member) => {
-  // Sprawdź, czy użytkownik znajduje się w mapie partneringUsers
   if (partneringUsers.has(member.id)) {
-    // Wyślij wiadomość powitalną lub dalsze instrukcje do użytkownika
     const userAd = partneringUsers.get(member.id);
     const channel = member.guild.channels.cache.find(ch => ch.name === '「💼」współprace' && ch.isText());
     if (channel) {
-      const displayName = member.displayName;
       await channel.send(`${userAd}\n\nPartnerstwo z: ${member}`);
       const dmChannel = await member.createDM();
       await dmChannel.send("✅ Dziękujemy za dołączenie! Twoja reklama została wstawiona.");
-      // Usuń użytkownika z mapy partneringUsers
       partneringUsers.delete(member.id);
-      // Zaktualizuj czas ostatniego partnerstwa
-      const now = Date.now();
-      partnershipTimestamps.set(member.id, now);
+      partnershipTimestamps.set(member.id, Date.now());
     } else {
       console.error("Nie znaleziono kanału '💼・partnerstwa'.");
     }
   }
 });
 
-// Obsługa błędów
 client.on('error', (error) => {
   console.error('Błąd Discorda:', error);
 });
@@ -200,5 +150,4 @@ process.on('unhandledRejection', (error) => {
   console.error('Nieobsłużony błąd:', error);
 });
 
-// Logowanie do Discorda
 client.login(process.env.DISCORD_TOKEN);
