@@ -10,7 +10,6 @@ const client = new Client({
   readyStatus: false,
 });
 
-// Serwer HTTP do utrzymania aktywności na Render
 app.get('/', (req, res) => {
   res.send('Self-bot działa na Render! 🚀');
 });
@@ -24,7 +23,6 @@ client.once('ready', () => {
   console.log(`Bot ${client.user.tag} jest gotowy.`);
 });
 
-// Reklama serwera (używana w systemie partnerstwa)
 const serverAd = `
 # 🌨️❄️ 𝒁𝒊𝒎𝒐𝒘𝒆 ⛄ 𝑹𝒆𝒌𝒍𝒂𝒎𝒚 ❄️🌨️
 > ✩ Poszukujesz idealnego serwera *reklamowego*, na którym widnieje wspaniała społeczność?
@@ -62,13 +60,19 @@ https://winterboard.pl/
 const partneringUsers = new Map();
 const partnershipTimestamps = new Map();
 
+// ✅ ZMIANA: cooldown 5 dni zamiast 7
+const PARTNERSHIP_COOLDOWN = 5 * 24 * 60 * 60 * 1000;
+
+// ✅ ZMIANA: ID kanału do wysyłania reklam partnerów
+const PARTNER_CHANNEL_ID = '1442908672899547187';
+
 client.on('messageCreate', async (message) => {
   if (!message.guild && !message.author.bot && message.author.id !== client.user.id) {
     const now = Date.now();
     const lastPartnership = partnershipTimestamps.get(message.author.id);
 
-    if (lastPartnership && now - lastPartnership < 7 * 24 * 60 * 60 * 1000) {
-      await message.channel.send("⏳ Musisz jeszcze poczekać, zanim będziesz mógł nawiązać kolejne partnerstwo. Spróbuj ponownie za tydzień.");
+    if (lastPartnership && now - lastPartnership < PARTNERSHIP_COOLDOWN) {
+      await message.channel.send("⏳ Musisz jeszcze poczekać, zanim będziesz mógł nawiązać kolejne partnerstwo. Spróbuj ponownie za 5 dni.");
       return;
     }
 
@@ -110,9 +114,10 @@ client.on('messageCreate', async (message) => {
           return;
         }
 
-        const channel = guild.channels.cache.find(ch => ch.name === '「💼」współprace' && ch.isText());
+        // ✅ ZMIANA: szukanie kanału po ID zamiast po nazwie
+        const channel = guild.channels.cache.get(PARTNER_CHANNEL_ID);
         if (!channel) {
-          await message.channel.send("Nie znaleziono kanału '「💼」współprace'.");
+          await message.channel.send("Nie znaleziono kanału partnerskiego.");
           return;
         }
 
@@ -129,7 +134,8 @@ client.on('messageCreate', async (message) => {
 client.on('guildMemberAdd', async (member) => {
   if (partneringUsers.has(member.id)) {
     const userAd = partneringUsers.get(member.id);
-    const channel = member.guild.channels.cache.find(ch => ch.name === '「💼」współprace' && ch.isText());
+    // ✅ ZMIANA: szukanie kanału po ID zamiast po nazwie
+    const channel = member.guild.channels.cache.get(PARTNER_CHANNEL_ID);
     if (channel) {
       await channel.send(`${userAd}\n\nPartnerstwo z: ${member}`);
       const dmChannel = await member.createDM();
@@ -137,7 +143,7 @@ client.on('guildMemberAdd', async (member) => {
       partneringUsers.delete(member.id);
       partnershipTimestamps.set(member.id, Date.now());
     } else {
-      console.error("Nie znaleziono kanału '💼・partnerstwa'.");
+      console.error("Nie znaleziono kanału partnerskiego.");
     }
   }
 });
