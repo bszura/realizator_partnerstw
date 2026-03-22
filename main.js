@@ -25,41 +25,37 @@ client.once('ready', () => {
 
 // Reklama serwera
 const serverAd = `
-# 🚀 Witaj w Coding Zone! 🚀
-**🔥 Czy jesteś gotowy, by dołączyć do najgorętszej społeczności programistów na Discordzie? 🔥**
+# 🌨️❄️ 𝒁𝒊𝒎𝒐𝒘𝒆 ⛄ 𝑹𝒆𝒌𝒍𝒂𝒎𝒚 ❄️🌨️
+> ✩ Poszukujesz idealnego serwera *reklamowego*, na którym widnieje wspaniała społeczność?
+> • Dłużej nie szukaj! Dołącz do 𝒏𝒂𝒔
+### ───────୨⋆｡‧˚❆☃️❆˚‧｡⋆ৎ───────
+## ❄️❔❄️ 𝑪𝑶 𝑶𝑭𝑬𝑹𝑼𝑱𝑬𝑴𝒀 ❄️❔❄️
+> 
+「 ✦ 𝑲𝒐𝒏𝒌𝒖𝒓𝒔𝒚 ✦ 」- Częste konkursy, i giveaway'e. Wielkie nagrody, małe wymagania!
+「 ✦ 𝑺𝒕𝒓𝒆𝒇𝒂 4𝒇𝒖𝒏 ✦ 」- Wiele kanałów do zabawy, z członkami, jak i botami!
+「 ✦ 𝑬𝒌𝒐𝒏𝒐𝒎𝒊𝒂 ✦ 」- Autorska ekonomia, z wieloma nagrodami! Serwerowe, Reklamy, na pewno znajdziesz coś dla *siebie*
+「 ✦ 𝑨𝒕𝑴𝒐𝑺𝒇𝑬𝒓𝑨 ✦ 」- Miła społeczność, która bardzo ciepło Cię przyjmie ❦
+「 ✦ 𝑺𝒕𝒓𝒆𝒇𝒂 𝑷𝒐𝒎𝒐𝒄𝒚 ✦ 」- Rozbudowany system zgłoszeń, a także szybka Administracja, gotowa Ci pomóc w każdej chwili
+「 ✦ 𝑺𝒛𝒚𝒃𝒌𝒂 𝒘𝒔𝒑𝒐𝒍𝒑𝒓𝒂𝒄𝒂 ✦ 」- realizatorzy, którzy chętnie zawrą z Tobą partnerstwo!
+「 ✦ 𝑨𝒖𝒕𝒐𝒓𝒔𝒌𝒊𝒆 𝑩𝒐𝒕𝒚 ✦ 」- Boty, które pozwalają na unikalne doznania!
+「 ✦ 𝒌𝒂𝒏𝒂𝒍𝒚 𝒓𝒆𝒌𝒍𝒂𝒎𝒐𝒘𝒆 ✦ 」- Mnóstwo kanałów reklamowych, które pozwolą wypromować Twój serwer!
+「 ✦ 𝑳𝒂𝒕𝒘𝒆 𝒘𝒚𝒑𝒓𝒐𝒎𝒐𝒘𝒂𝒏𝒊𝒆 𝒔𝒊𝒆 ✦ 」- Wiele sposobów na reklamowanie serwera, za darmo - jak i płatnie!
+### ───────୨⋆｡‧˚❆☃️❆˚‧｡⋆ৎ───────
+## ❄️❔❄️ 𝑲𝑶𝑮𝑶 𝑺𝒁𝑼𝑲𝑨𝑴𝒀 ❄️❔❄️
+> 
+✦***Administracji*** -  która pilnuje porządku
+✦***Realizatorów*** -  kasa na partnerstwa
+✦***Partnerstw*** - promujmy się nawzajem
+✦**Boosterów*** -  wesprzyj nasz serwer
+✦***Miła Społeczność*** - rozwijajmy Nasz serwer
+✦***Ciebie*** - Wspaniałą osobę!
+### ───────୨⋆｡‧˚❆☃️❆˚‧｡⋆ৎ───────
+𝑵𝒊𝒆 𝒘𝒊𝒆𝒓𝒛𝒚𝒔𝒛? 𝒔𝒑𝒓𝒂𝒘𝒅𝒛 𝒔𝒂𝒎! 𝑵𝒊𝒆 𝒑𝒐𝒛𝒂𝒍𝒖𝒋𝒆𝒔𝒛
+-# *gif:*https://giphy.com/gifs/vZeuprCarBQPL2P8sq
+-# Link: 🥶 https://discord.gg/43rMsV9HG7 🥶
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-⟨👨‍💻⟩ **Coding Zone** to miejsce, gdzie pasjonaci kodowania spotykają się, by:
-  
->      ⟨💡⟩ **Dzielić się swoimi projektami** i osiągnięciami,
->  ⟨🤝⟩ **Pomagać sobie nawzajem** w rozwiązywaniu problemów,
->  ⟨🎉⟩ **Relaksować się** na kanałach for fun – nawet najlepszy kod czasem potrzebuje przerwy!
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-⟨💬⟩ **Masz pytanie?** Nasi eksperci są zawsze gotowi, by pomóc!
-⟨🎮⟩ **Chcesz odpocząć?** Zagraj z nami w gry, porozmawiaj na luźne tematy lub po prostu zrelaksuj się w towarzystwie ludzi, którzy rozumieją Twoją pasję.
-
-────────────────────────────────────────────────────────────────────────────────────
-
-# 🌟 DLACZEGO CODING ZONE? 🌟
-
->      ⟨✅⟩ **Aktywna społeczność** – zawsze ktoś jest online!
->      ⟨✅⟩ **Kanały tematyczne** – od ⟨🐍⟩ Python po ⟨🟨⟩ JavaScript, od ⟨🤖⟩ AI po ⟨🌐⟩ web dev!
->      ⟨✅⟩ **Kanały rozrywkowe** – ⟨📸⟩ memy, ⟨🎲⟩ gry, ⟨🎵⟩ muzyka i wiele więcej!
->      ⟨✅⟩ **Wydarzenia i konkursy** – bo kodowanie to nie tylko praca, ale też zabawa!
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-# 🔗 DOŁĄCZ JUŻ TERAZ! 🔗
-👉 [KLIKNIJ TUTAJ, BY DOŁĄCZYĆ!](https://discord.gg/erDFWnB5pB) 👈
-Gif: https://cdn.discordapp.com/attachments/1348199237673947167/1349117172340756530/coding_zone_gif.gif?ex=67d1eec7&is=67d09d47&hm=5c2adf45485c262dd70cfa09b2f4b6e8171b97791adb52c24e4defe9ccb8792c&
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-**🎉 CZEKAMY WŁAŚNIE NA CIEBIE! 🎉**
-# 🔥 Let’s code, share, and have fun together! 🔥
+Strona naszego serwera:
+https://winterboard.pl/
 `;
 
 // Lista użytkowników partnerstwa i ich czas ostatniego partnerstwa
