@@ -61,7 +61,7 @@ const partneringUsers = new Map();
 const partnershipTimestamps = new Map();
 
 const PARTNERSHIP_COOLDOWN = 5 * 24 * 60 * 60 * 1000;
-const PARTNER_CHANNEL_ID = '1442908672899547187';
+const PARTNER_CHANNEL_ID = '1485238096319746049';
 const GUILD_ID = '1484858033887510560';
 
 client.on('messageCreate', async (message) => {
