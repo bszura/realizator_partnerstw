@@ -125,7 +125,7 @@ client.on('messageCreate', async (message) => {
       console.error("Nie znaleziono kanału '💼・partnerstwa'.");
     }
   }
-});
+};
 
 // Obsługa błędów
 client.on('error', (error) => {
