@@ -110,7 +110,7 @@ client.on('messageCreate', async (message) => {
   if (partneringUsers.has(member.id)) {
     // Wyślij wiadomość powitalną lub dalsze instrukcje do użytkownika
     const userAd = partneringUsers.get(member.id);
-    const channel = member.guild.channels.cache.find(ch => ch.name === '〔🤝〕partnerstwa' && ch.isText());
+    //const channel = member.guild.channels.cache.find(ch => ch.name === '〔🤝〕partnerstwa' && ch.isText());
     if (channel) {
       const displayName = member.displayName;
       await channel.send(`${userAd}\n\nPartnerstwo z: ${member}`);
