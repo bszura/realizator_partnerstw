@@ -24,37 +24,24 @@ client.once('ready', () => {
 });
 
 const serverAd = `
-# 🌨️❄️ 𝒁𝒊𝒎𝒐𝒘𝒆 ⛄ 𝑹𝒆𝒌𝒍𝒂𝒎𝒚 ❄️🌨️
-> ✩ Poszukujesz idealnego serwera *reklamowego*, na którym widnieje wspaniała społeczność?
-> • Dłużej nie szukaj! Dołącz do 𝒏𝒂𝒔
-### ───────୨⋆｡‧˚❆☃️❆˚‧｡⋆ৎ───────
-## ❄️❔❄️ 𝑪𝑶 𝑶𝑭𝑬𝑹𝑼𝑱𝑬𝑴𝒀 ❄️❔❄️
-> 
-「 ✦ 𝑲𝒐𝒏𝒌𝒖𝒓𝒔𝒚 ✦ 」- Częste konkursy, i giveaway'e. Wielkie nagrody, małe wymagania!
-「 ✦ 𝑺𝒕𝒓𝒆𝒇𝒂 4𝒇𝒖𝒏 ✦ 」- Wiele kanałów do zabawy, z członkami, jak i botami!
-「 ✦ 𝑬𝒌𝒐𝒏𝒐𝒎𝒊𝒂 ✦ 」- Autorska ekonomia, z wieloma nagrodami! Serwerowe, Reklamy, na pewno znajdziesz coś dla *siebie*
-「 ✦ 𝑨𝒕𝑴𝒐𝑺𝒇𝑬𝒓𝑨 ✦ 」- Miła społeczność, która bardzo ciepło Cię przyjmie ❦
-「 ✦ 𝑺𝒕𝒓𝒆𝒇𝒂 𝑷𝒐𝒎𝒐𝒄𝒚 ✦ 」- Rozbudowany system zgłoszeń, a także szybka Administracja, gotowa Ci pomóc w każdej chwili
-「 ✦ 𝑺𝒛𝒚𝒃𝒌𝒂 𝒘𝒔𝒑𝒐𝒍𝒑𝒓𝒂𝒄𝒂 ✦ 」- realizatorzy, którzy chętnie zawrą z Tobą partnerstwo!
-「 ✦ 𝑨𝒖𝒕𝒐𝒓𝒔𝒌𝒊𝒆 𝑩𝒐𝒕𝒚 ✦ 」- Boty, które pozwalają na unikalne doznania!
-「 ✦ 𝒌𝒂𝒏𝒂𝒍𝒚 𝒓𝒆𝒌𝒍𝒂𝒎𝒐𝒘𝒆 ✦ 」- Mnóstwo kanałów reklamowych, które pozwolą wypromować Twój serwer!
-「 ✦ 𝑳𝒂𝒕𝒘𝒆 𝒘𝒚𝒑𝒓𝒐𝒎𝒐𝒘𝒂𝒏𝒊𝒆 𝒔𝒊𝒆 ✦ 」- Wiele sposobów na reklamowanie serwera, za darmo - jak i płatnie!
-### ───────୨⋆｡‧˚❆☃️❆˚‧｡⋆ৎ───────
-## ❄️❔❄️ 𝑲𝑶𝑮𝑶 𝑺𝒁𝑼𝑲𝑨𝑴𝒀 ❄️❔❄️
-> 
-✦***Administracji*** -  która pilnuje porządku
-✦***Realizatorów*** -  kasa na partnerstwa
-✦***Partnerstw*** - promujmy się nawzajem
-✦**Boosterów*** -  wesprzyj nasz serwer
-✦***Miła Społeczność*** - rozwijajmy Nasz serwer
-✦***Ciebie*** - Wspaniałą osobę!
-### ───────୨⋆｡‧˚❆☃️❆˚‧｡⋆ৎ───────
-𝑵𝒊𝒆 𝒘𝒊𝒆𝒓𝒛𝒚𝒔𝒛? 𝒔𝒑𝒓𝒂𝒘𝒅𝒛 𝒔𝒂𝒎! 𝑵𝒊𝒆 𝒑𝒐𝒛𝒂𝒍𝒖𝒋𝒆𝒔𝒛
--# *gif:*https://giphy.com/gifs/vZeuprCarBQPL2P8sq
--# Link: 🥶 https://discord.gg/43rMsV9HG7 🥶
+#  🦔︲Taniej! - Nie tylko z nazwy!
 
-Strona naszego serwera:
-https://winterboard.pl/
+## **⭐ ︲ Wiesz dlaczego klienci wybierają NAS?**
+
+> `💜` **︲** Profesjonalne podejście sprzedawców do użytkowników
+> `💸` **︲** Najniższe ceny na całym rynku - dlatego nazywamy się "Taniej!" 🙂
+> `📦` **︲** N1tr0 za 17PLN - działające na DOWOLNYM koncie
+> `🚚` **︲** Szeroka oferta: konta/waluty do gier, social boost itd.
+> `🎉` **︲** Regularne konkursy o dobre pieniądze
+> `✅` **︲** Właściciel posiada ponad **2800** potwierdzonych legitchecków
+> `⚡` **︲** Natychmiastowa odpowiedź na ticketach
+> `💸` **︲** Aktualnie płacimy za __zaproszenia__ oraz napisanie __propozycji__
+> `📩` **︲** Poszukujemy Realizatorów Partnerstw, zarabiaj do 1.20 PLN za każde partnerstwo!
+
+
+## `🛒` **︲ Dołącz do nas, aktualnie sprzedajemy N1tr0 za 17PLN - najtaniej na całym rynku - nie może cie zabraknąć:)**  
+`👋` **︲ Do zobaczenia na serwerze!** 
+`🔗` [Dołącz teraz!](https://discord.gg/ogtaniej)
 `;
 
 const partneringUsers = new Map();
