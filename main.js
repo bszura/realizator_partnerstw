@@ -82,9 +82,7 @@ client.on('messageCreate', async (message) => {
         const reply = await message.channel.awaitMessages({ filter, max: 1, time: 60000, errors: ['time'] }).catch(() => null);
 
         if (reply && !reply.first().content.toLowerCase().includes('nie')) {
-          await message.channel.send("Mój właściciel @bRtech za niedługo na pewno dołączy do twojego serwera");
-          const notificationUser = await client.users.fetch('782647700403257375');
-          await notificationUser.send(`Wymagane dołączenie na serwer:\n${userAd}`);
+          await message.channel.send("Niedługo wbiję na twój serwer");
         }
 
         const guild = await client.guilds.fetch(GUILD_ID).catch(() => null);
