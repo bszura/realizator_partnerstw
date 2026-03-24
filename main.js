@@ -101,9 +101,7 @@ client.on('messageCreate', async (message) => {
         }
 
         const channel = guild.channels.cache.find(ch => ch.name === '〔🤝〕partnerstwa' && ch.isText());
-        const channel = guild.channels.cache.find(ch => ch.name === '〔🤝〕partnerstwa' && ch.isText());
         if (!channel) {
-          await message.channel.send("Nie znaleziono kanału '〔🤝〕partnerstwa'.");
           await message.channel.send("Nie znaleziono kanału '〔🤝〕partnerstwa'.");
           return;
         }
@@ -112,7 +110,6 @@ client.on('messageCreate', async (message) => {
   if (partneringUsers.has(member.id)) {
     // Wyślij wiadomość powitalną lub dalsze instrukcje do użytkownika
     const userAd = partneringUsers.get(member.id);
-    const channel = member.guild.channels.cache.find(ch => ch.name === '〔🤝〕partnerstwa' && ch.isText());
     const channel = member.guild.channels.cache.find(ch => ch.name === '〔🤝〕partnerstwa' && ch.isText());
     if (channel) {
       const displayName = member.displayName;
