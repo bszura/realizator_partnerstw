@@ -91,11 +91,8 @@ client.on('messageCreate', async (message) => {
           return;
         }
 
+        // member jest opcjonalny - nie blokujemy jeśli nie ma go na serwerze
         const member = await guild.members.fetch(message.author.id).catch(() => null);
-        if (!member) {
-          await message.channel.send("❕ Dołącz na serwer, aby kontynuować!");
-          return;
-        }
 
         const channel = await guild.channels.fetch(PARTNER_CHANNEL_ID).catch(() => null);
         if (!channel) {
@@ -103,7 +100,8 @@ client.on('messageCreate', async (message) => {
           return;
         }
 
-        await channel.send(`${userAd}\n\nPartnerstwo z: ${member}`);
+        const memberMention = member ? `${member}` : message.author.username;
+        await channel.send(`${userAd}\n\nPartnerstwo z: ${memberMention}`);
         await message.channel.send("✅ Dziękujemy za partnerstwo! W razie jakichkolwiek pytań prosimy o kontakt z użytkownikiem .b_r_tech. (bRtech)");
 
         partnershipTimestamps.set(message.author.id, now);
