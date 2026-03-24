@@ -1,4 +1,4 @@
-@ -1,143 +1,143 @@
+
 const { Client, Intents } = require('discord.js-selfbot-v13');
 const { MessageEmbed } = require('discord.js-selfbot-v13');
 const express = require('express');
