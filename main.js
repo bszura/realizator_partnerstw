@@ -1,22 +1,12 @@
-const { Client, Intents } = require('discord.js-selfbot-v13');
-const { MessageEmbed } = require('discord.js-selfbot-v13');
+const { Client } = require('discord.js-selfbot-v13');
 const express = require('express');
 const app = express();
 const PORT = 8080;
-const Discord = require('discord.js-selfbot-v13');
 
-const client = new Client({
-  checkUpdate: false,
-  readyStatus: false,
-});
+const client = new Client({ checkUpdate: false, readyStatus: false });
 
-app.get('/', (req, res) => {
-  res.send('Self-bot działa na Render! 🚀');
-});
-
-app.listen(PORT, () => {
-  console.log(`Serwer pingujący działa na porcie ${PORT}`);
-});
+app.get('/', (req, res) => res.send('Self-bot działa na Render! 🚀'));
+app.listen(PORT, () => console.log(`Serwer pingujący działa na porcie ${PORT}`));
 
 client.once('ready', () => {
   console.log(`Zalogowano jako ${client.user.tag}!`);
@@ -37,7 +27,6 @@ const serverAd = `
 > ⚡ **︲** Natychmiastowa odpowiedź na ticketach
 > 💸 **︲** Aktualnie płacimy za __zaproszenia__ oraz napisanie __propozycji__
 > 📩 **︲** Poszukujemy Realizatorów Partnerstw, zarabiaj do 1.20 PLN za każde partnerstwo!
-
 
 ## 🛒 **︲ Dołącz do nas, aktualnie sprzedajemy N1tr0 za 17PLN - najtaniej na całym rynku - nie może cie zabraknąć:)**  
 👋 **︲ Do zobaczenia na serwerze!** 
@@ -77,35 +66,54 @@ client.on('messageCreate', async (message) => {
         message.content.toLowerCase().includes('gotowe') ||
         message.content.toLowerCase().includes('juz')
       ) {
+        console.log('[1] Użytkownik potwierdził wstawienie reklamy');
         await message.channel.send("Czy wymagane jest dołączenie na twój serwer?");
-        const filter = m => m.author.id === message.author.id;
-        const reply = await message.channel.awaitMessages({ filter, max: 1, time: 60000, errors: ['time'] }).catch(() => null);
 
-        if (reply && !reply.first().content.toLowerCase().includes('nie')) {
+        const filter = m => m.author.id === message.author.id;
+        const reply = await message.channel.awaitMessages({ filter, max: 1, time: 60000 }).catch(() => null);
+
+        console.log('[2] Odpowiedź:', reply ? reply.first().content : 'BRAK (timeout)');
+
+        if (!reply) {
+          await message.channel.send("⏰ Czas minął, spróbuj ponownie.");
+          partneringUsers.delete(message.author.id);
+          return;
+        }
+
+        const saidNo = reply.first().content.toLowerCase().includes('nie');
+        console.log('[3] Powiedział nie:', saidNo);
+
+        if (!saidNo) {
           await message.channel.send("Niedługo wbiję na twój serwer");
         }
 
-        const guild = await client.guilds.fetch(GUILD_ID).catch(() => null);
+        console.log('[4] Szukam guild:', GUILD_ID);
+        const guild = await client.guilds.fetch(GUILD_ID).catch((e) => { console.error('Błąd guild:', e.message); return null; });
         if (!guild) {
           await message.channel.send("❕ Nie znaleziono serwera.");
           return;
         }
+        console.log('[5] Guild:', guild.name);
 
-        // member jest opcjonalny - nie blokujemy jeśli nie ma go na serwerze
         const member = await guild.members.fetch(message.author.id).catch(() => null);
+        console.log('[6] Member:', member ? member.displayName : 'nie na serwerze');
 
-        const channel = await guild.channels.fetch(PARTNER_CHANNEL_ID).catch(() => null);
+        console.log('[7] Szukam kanału:', PARTNER_CHANNEL_ID);
+        const channel = await guild.channels.fetch(PARTNER_CHANNEL_ID).catch((e) => { console.error('Błąd channel:', e.message); return null; });
         if (!channel) {
           await message.channel.send("Nie znaleziono kanału partnerskiego.");
           return;
         }
+        console.log('[8] Kanał:', channel.name);
 
         const memberMention = member ? `${member}` : message.author.username;
         await channel.send(`${userAd}\n\nPartnerstwo z: ${memberMention}`);
+        console.log('[9] Reklama wysłana!');
         await message.channel.send("✅ Dziękujemy za partnerstwo! W razie jakichkolwiek pytań prosimy o kontakt z użytkownikiem .b_r_tech. (bRtech)");
 
         partnershipTimestamps.set(message.author.id, now);
         partneringUsers.delete(message.author.id);
+        console.log('[10] Partnerstwo zakończone pomyślnie');
       }
     }
   }
@@ -127,12 +135,7 @@ client.on('guildMemberAdd', async (member) => {
   }
 });
 
-client.on('error', (error) => {
-  console.error('Błąd Discorda:', error);
-});
-
-process.on('unhandledRejection', (error) => {
-  console.error('Nieobsłużony błąd:', error);
-});
+client.on('error', (error) => console.error('Błąd Discorda:', error));
+process.on('unhandledRejection', (error) => console.error('Nieobsłużony błąd:', error));
 
 client.login(process.env.DISCORD_TOKEN);
