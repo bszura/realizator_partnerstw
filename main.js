@@ -57,7 +57,7 @@ const partneringUsers = new Map();
 const partnershipTimestamps = new Map();
 
 const PARTNERSHIP_COOLDOWN = 5 * 24 * 60 * 60 * 1000;
-const REMINDER_DELAY = 15 * 1000; // na testy 15 sekund, na produkcję: 5 * 24 * 60 * 60 * 1000
+const REMINDER_DELAY = 15 * 1000; // testy: 15 sekund | produkcja: 5 * 24 * 60 * 60 * 1000
 const PARTNER_CHANNEL_ID = '1485238096319746049';
 const GUILD_ID = '1484858033887510560';
 
@@ -72,17 +72,17 @@ function startReminderChecker() {
     for (const row of result.rows) {
       const userId = row.user_id;
       try {
-        const user = await client.users.fetch(userId);
-        const dm = await user.createDM();
-        await dm.send("Partnerstwo?");
-
+        // najpierw czyścimy stan, potem wysyłamy wiadomość
         await db.execute({
           sql: 'DELETE FROM partnership_reminders WHERE user_id = ?',
           args: [userId],
         });
-
         partneringUsers.delete(userId);
         partnershipTimestamps.delete(userId);
+
+        const user = await client.users.fetch(userId);
+        const dm = await user.createDM();
+        await dm.send("Partnerstwo?");
       } catch (e) {
         console.error(`Błąd przypomnienia dla ${userId}:`, e.message);
       }
