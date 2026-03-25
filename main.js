@@ -9,7 +9,6 @@ const client = new Client({
   readyStatus: false,
 });
 
-// Turso DB
 const db = createClient({
   url: process.env.TURSO_URL,
   authToken: process.env.TURSO_TOKEN,
@@ -58,12 +57,10 @@ const partneringUsers = new Map();
 const partnershipTimestamps = new Map();
 
 const PARTNERSHIP_COOLDOWN = 5 * 24 * 60 * 60 * 1000;
-// Na testy: 15 sekund. Na produkcję zmień na: 5 * 24 * 60 * 60 * 1000
-const REMINDER_DELAY = 15 * 1000;
+const REMINDER_DELAY = 15 * 1000; // na testy 15 sekund, na produkcję: 5 * 24 * 60 * 60 * 1000
 const PARTNER_CHANNEL_ID = '1485238096319746049';
 const GUILD_ID = '1484858033887510560';
 
-// Sprawdza co 10 sekund czy komuś minął czas przypomnienia
 function startReminderChecker() {
   setInterval(async () => {
     const now = Date.now();
@@ -79,13 +76,11 @@ function startReminderChecker() {
         const dm = await user.createDM();
         await dm.send("Partnerstwo?");
 
-        // Usuń z bazy po wysłaniu
         await db.execute({
           sql: 'DELETE FROM partnership_reminders WHERE user_id = ?',
           args: [userId],
         });
 
-        // Zresetuj stan użytkownika żeby mógł zacząć od nowa
         partneringUsers.delete(userId);
         partnershipTimestamps.delete(userId);
       } catch (e) {
@@ -96,23 +91,19 @@ function startReminderChecker() {
 }
 
 async function askForReminder(message, userId) {
-  const msg = await message.channel.send("🔔 Czy chcesz za 5 dni znowu nawiązać partnerstwo?\n✅ - Tak  |  ❌ - Nie");
-  await msg.react('✅');
-  await msg.react('❌');
+  await message.channel.send("🔔 Czy chcesz za 5 dni znowu nawiązać partnerstwo? Wpisz **tak** lub **nie**.");
 
-  const filter = (reaction, user) =>
-    ['✅', '❌'].includes(reaction.emoji.name) && user.id === userId;
-
-  const collected = await msg.awaitReactions({ filter, max: 1, time: 30000 }).catch(() => null);
+  const filter = m => m.author.id === userId;
+  const collected = await message.channel.awaitMessages({ filter, max: 1, time: 30000 }).catch(() => null);
 
   if (!collected || collected.size === 0) {
     await message.channel.send("⏰ Czas na odpowiedź minął. Dziękujemy za partnerstwo!");
     return;
   }
 
-  const reaction = collected.first().emoji.name;
+  const answer = collected.first().content.toLowerCase();
 
-  if (reaction === '✅') {
+  if (answer.includes('tak')) {
     const remindAt = Date.now() + REMINDER_DELAY;
     await db.execute({
       sql: 'INSERT OR REPLACE INTO partnership_reminders (user_id, remind_at) VALUES (?, ?)',
@@ -190,7 +181,6 @@ client.on('messageCreate', async (message) => {
         partnershipTimestamps.set(message.author.id, now);
         partneringUsers.delete(message.author.id);
 
-        // Pytanie o przypomnienie z reakcjami
         await askForReminder(message, message.author.id);
       }
     }
