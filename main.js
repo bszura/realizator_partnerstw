@@ -55,7 +55,8 @@ const serverAd = `
 
 const partneringUsers = new Map();
 const partnershipTimestamps = new Map();
-const waitingUsers = new Set(); // użytkownicy w trakcie jakiegokolwiek oczekiwania na odpowiedź
+const waitingUsers = new Set();
+const reminderPending = new Set(); // użytkownicy oczekujący na odpowiedź o przypomnieniu
 
 const PARTNERSHIP_COOLDOWN = 5 * 24 * 60 * 60 * 1000;
 const REMINDER_DELAY = 15 * 1000; // testy: 15 sekund | produkcja: 5 * 24 * 60 * 60 * 1000
@@ -103,6 +104,7 @@ client.on('messageCreate', async (message) => {
   if (message.author.bot) return;
   if (message.author.id === client.user.id) return;
   if (waitingUsers.has(message.author.id)) return;
+  if (reminderPending.has(message.author.id)) return; // blokujemy podczas pytania o przypomnienie
 
   const userId = message.author.id;
   const now = Date.now();
@@ -181,9 +183,14 @@ client.on('messageCreate', async (message) => {
   await message.channel.send("✅ Dziękujemy za partnerstwo!");
   partneringUsers.delete(userId);
 
+  // --- Ustaw cooldown PRZED pytaniem o przypomnienie ---
+  partnershipTimestamps.set(userId, now);
+  reminderPending.add(userId); // blokujemy messageCreate podczas pytania
+
   // --- Pytanie o przypomnienie ---
   await message.channel.send("🔔 Czy chcesz za 5 dni znowu nawiązać partnerstwo? Wpisz **tak** lub **nie**.");
   const reminderReply = await awaitAnswer(message.channel, userId, 30000);
+  reminderPending.delete(userId); // odblokuj po odpowiedzi
 
   if (!reminderReply) {
     await message.channel.send("⏰ Czas na odpowiedź minął. Do zobaczenia!");
@@ -197,9 +204,6 @@ client.on('messageCreate', async (message) => {
   } else {
     await message.channel.send("👋 Rozumiem! Do zobaczenia!");
   }
-
-  // --- Ustaw cooldown dopiero po całym procesie ---
-  partnershipTimestamps.set(userId, now);
 });
 
 client.on('guildMemberAdd', async (member) => {
