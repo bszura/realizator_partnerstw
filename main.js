@@ -55,6 +55,7 @@ const serverAd = `
 
 const partneringUsers = new Map();
 const partnershipTimestamps = new Map();
+const waitingForReminderAnswer = new Set(); // ✅ nowy Set
 
 const PARTNERSHIP_COOLDOWN = 5 * 24 * 60 * 60 * 1000;
 const REMINDER_DELAY = 15 * 1000; // testy: 15 sekund | produkcja: 5 * 24 * 60 * 60 * 1000
@@ -72,7 +73,6 @@ function startReminderChecker() {
     for (const row of result.rows) {
       const userId = row.user_id;
       try {
-        // najpierw czyścimy stan, potem wysyłamy wiadomość
         await db.execute({
           sql: 'DELETE FROM partnership_reminders WHERE user_id = ?',
           args: [userId],
@@ -91,10 +91,13 @@ function startReminderChecker() {
 }
 
 async function askForReminder(message, userId) {
+  waitingForReminderAnswer.add(userId); // ✅ oznaczamy użytkownika
   await message.channel.send("🔔 Czy chcesz za 5 dni znowu nawiązać partnerstwo? Wpisz **tak** lub **nie**.");
 
   const filter = m => m.author.id === userId;
   const collected = await message.channel.awaitMessages({ filter, max: 1, time: 30000 }).catch(() => null);
+
+  waitingForReminderAnswer.delete(userId); // ✅ usuwamy po odpowiedzi
 
   if (!collected || collected.size === 0) {
     await message.channel.send("⏰ Czas na odpowiedź minął. Dziękujemy za partnerstwo!");
@@ -117,6 +120,9 @@ async function askForReminder(message, userId) {
 
 client.on('messageCreate', async (message) => {
   if (!message.guild && !message.author.bot && message.author.id !== client.user.id) {
+    // ✅ jeśli użytkownik odpowiada na pytanie o przypomnienie, ignorujemy
+    if (waitingForReminderAnswer.has(message.author.id)) return;
+
     const now = Date.now();
     const lastPartnership = partnershipTimestamps.get(message.author.id);
 
@@ -142,11 +148,7 @@ client.on('messageCreate', async (message) => {
         message.content.toLowerCase().includes('gotowe') ||
         message.content.toLowerCase().includes('juz')
       ) {
-        
-
-
         await message.channel.send("Za niedługo na pewno wbiję na twój serwer");
-        
 
         const guild = await client.guilds.fetch(GUILD_ID).catch(() => null);
         if (!guild) {
