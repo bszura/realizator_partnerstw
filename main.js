@@ -55,7 +55,7 @@ const serverAd = `
 
 const partneringUsers = new Map();
 const partnershipTimestamps = new Map();
-const waitingForReminderAnswer = new Set(); // ✅ nowy Set
+const waitingUsers = new Set(); // użytkownicy w trakcie jakiegokolwiek oczekiwania na odpowiedź
 
 const PARTNERSHIP_COOLDOWN = 5 * 24 * 60 * 60 * 1000;
 const REMINDER_DELAY = 15 * 1000; // testy: 15 sekund | produkcja: 5 * 24 * 60 * 60 * 1000
@@ -90,23 +90,104 @@ function startReminderChecker() {
   }, 10 * 1000);
 }
 
-async function askForReminder(message, userId) {
-  waitingForReminderAnswer.add(userId); // ✅ oznaczamy użytkownika
-  await message.channel.send("🔔 Czy chcesz za 5 dni znowu nawiązać partnerstwo? Wpisz **tak** lub **nie**.");
-
+async function awaitAnswer(channel, userId, timeout = 60000) {
+  waitingUsers.add(userId);
   const filter = m => m.author.id === userId;
-  const collected = await message.channel.awaitMessages({ filter, max: 1, time: 30000 }).catch(() => null);
+  const collected = await channel.awaitMessages({ filter, max: 1, time: timeout }).catch(() => null);
+  waitingUsers.delete(userId);
+  return collected ? collected.first() : null;
+}
 
-  waitingForReminderAnswer.delete(userId); // ✅ usuwamy po odpowiedzi
+client.on('messageCreate', async (message) => {
+  if (message.guild) return;
+  if (message.author.bot) return;
+  if (message.author.id === client.user.id) return;
+  if (waitingUsers.has(message.author.id)) return;
 
-  if (!collected || collected.size === 0) {
-    await message.channel.send("⏰ Czas na odpowiedź minął. Dziękujemy za partnerstwo!");
+  const userId = message.author.id;
+  const now = Date.now();
+
+  // --- Sprawdzenie cooldownu ---
+  const lastPartnership = partnershipTimestamps.get(userId);
+  if (lastPartnership && now - lastPartnership < PARTNERSHIP_COOLDOWN) {
+    await message.channel.send("⏳ Musisz jeszcze poczekać przed kolejnym partnerstwem. Spróbuj ponownie za 5 dni.");
     return;
   }
 
-  const answer = collected.first().content.toLowerCase();
+  // --- Krok 1: pierwsze wejście - poproś o reklamę ---
+  if (!partneringUsers.has(userId)) {
+    partneringUsers.set(userId, null);
+    await message.channel.send("🌎 Jeśli chcesz nawiązać partnerstwo, wyślij swoją reklamę (maksymalnie 1 serwer).");
+    return;
+  }
 
-  if (answer.includes('tak')) {
+  const userAd = partneringUsers.get(userId);
+
+  // --- Krok 2: zapisz reklamę i wyślij naszą ---
+  if (userAd === null) {
+    partneringUsers.set(userId, message.content);
+    await message.channel.send("✅ Wstaw naszą reklamę:");
+    await message.channel.send(serverAd);
+    await message.channel.send("⏰ Daj znać gdy wstawisz, wpisując np. **gotowe**.");
+    return;
+  }
+
+  // --- Krok 3: użytkownik potwierdził wstawienie reklamy ---
+  const confirmed =
+    message.content.toLowerCase().includes('wstawi') ||
+    message.content.toLowerCase().includes('już') ||
+    message.content.toLowerCase().includes('gotowe') ||
+    message.content.toLowerCase().includes('juz');
+
+  if (!confirmed) return;
+
+  // --- Pytanie o dołączenie na serwer ---
+  await message.channel.send("❓ Czy wymagane jest dołączenie na twój serwer? (tak/nie)");
+  const joinReply = await awaitAnswer(message.channel, userId);
+
+  if (!joinReply) {
+    await message.channel.send("⏰ Czas minął, spróbuj ponownie.");
+    partneringUsers.delete(userId);
+    return;
+  }
+
+  if (!joinReply.content.toLowerCase().includes('nie')) {
+    await message.channel.send("Za niedługo na pewno wbiję na twój serwer.");
+  }
+
+  // --- Pobierz serwer ---
+  const guild = await client.guilds.fetch(GUILD_ID).catch(() => null);
+  if (!guild) {
+    await message.channel.send("❕ Nie znaleziono serwera.");
+    return;
+  }
+
+  // --- Sprawdź czy jest na serwerze ---
+  const member = await guild.members.fetch(userId).catch(() => null);
+  if (!member) {
+    await message.channel.send("❕ Dołącz na serwer, aby kontynuować!");
+    return;
+  }
+
+  // --- Pobierz kanał partnerski ---
+  const channel = await guild.channels.fetch(PARTNER_CHANNEL_ID).catch(() => null);
+  if (!channel) {
+    await message.channel.send("❕ Nie znaleziono kanału partnerskiego.");
+    return;
+  }
+
+  // --- Wyślij reklamę na kanał ---
+  await channel.send(`${userAd}\n\nPartnerstwo z: ${member}`);
+  await message.channel.send("✅ Dziękujemy za partnerstwo!");
+  partneringUsers.delete(userId);
+
+  // --- Pytanie o przypomnienie ---
+  await message.channel.send("🔔 Czy chcesz za 5 dni znowu nawiązać partnerstwo? Wpisz **tak** lub **nie**.");
+  const reminderReply = await awaitAnswer(message.channel, userId, 30000);
+
+  if (!reminderReply) {
+    await message.channel.send("⏰ Czas na odpowiedź minął. Do zobaczenia!");
+  } else if (reminderReply.content.toLowerCase().includes('tak')) {
     const remindAt = Date.now() + REMINDER_DELAY;
     await db.execute({
       sql: 'INSERT OR REPLACE INTO partnership_reminders (user_id, remind_at) VALUES (?, ?)',
@@ -114,70 +195,11 @@ async function askForReminder(message, userId) {
     });
     await message.channel.send("✅ Super! Przypomnę Ci o partnerstwie za 5 dni.");
   } else {
-    await message.channel.send("👋 Rozumiem! Dziękujemy za partnerstwo. Do zobaczenia!");
+    await message.channel.send("👋 Rozumiem! Do zobaczenia!");
   }
-}
 
-client.on('messageCreate', async (message) => {
-  if (!message.guild && !message.author.bot && message.author.id !== client.user.id) {
-    // ✅ jeśli użytkownik odpowiada na pytanie o przypomnienie, ignorujemy
-    if (waitingForReminderAnswer.has(message.author.id)) return;
-
-    const now = Date.now();
-    const lastPartnership = partnershipTimestamps.get(message.author.id);
-
-    if (lastPartnership && now - lastPartnership < PARTNERSHIP_COOLDOWN) {
-      await message.channel.send("⏳ Musisz jeszcze poczekać, zanim będziesz mógł nawiązać kolejne partnerstwo. Spróbuj ponownie za 5 dni.");
-      return;
-    }
-
-    if (!partneringUsers.has(message.author.id)) {
-      partneringUsers.set(message.author.id, null);
-      await message.channel.send("🌎 Jeśli chcesz nawiązać partnerstwo, wyślij swoją reklamę (maksymalnie 1 serwer).");
-    } else {
-      const userAd = partneringUsers.get(message.author.id);
-
-      if (userAd === null) {
-        partneringUsers.set(message.author.id, message.content);
-        await message.channel.send(`✅ Wstaw naszą reklamę:`);
-        await message.channel.send(`${serverAd}`);
-        await message.channel.send("⏰ Daj znać, gdy wstawisz reklamę!");
-      } else if (
-        message.content.toLowerCase().includes('wstawi') ||
-        message.content.toLowerCase().includes('już') ||
-        message.content.toLowerCase().includes('gotowe') ||
-        message.content.toLowerCase().includes('juz')
-      ) {
-        await message.channel.send("Za niedługo na pewno wbiję na twój serwer");
-
-        const guild = await client.guilds.fetch(GUILD_ID).catch(() => null);
-        if (!guild) {
-          await message.channel.send("❕ Nie znaleziono serwera.");
-          return;
-        }
-
-        const member = await guild.members.fetch(message.author.id).catch(() => null);
-        if (!member) {
-          await message.channel.send("❕ Dołącz na serwer, aby kontynuować!");
-          return;
-        }
-
-        const channel = await guild.channels.fetch(PARTNER_CHANNEL_ID).catch(() => null);
-        if (!channel) {
-          await message.channel.send("Nie znaleziono kanału partnerskiego.");
-          return;
-        }
-
-        await channel.send(`${userAd}\n\nPartnerstwo z: ${member}`);
-        await message.channel.send("✅ Dziękujemy za partnerstwo!");
-
-        partnershipTimestamps.set(message.author.id, now);
-        partneringUsers.delete(message.author.id);
-
-        await askForReminder(message, message.author.id);
-      }
-    }
-  }
+  // --- Ustaw cooldown dopiero po całym procesie ---
+  partnershipTimestamps.set(userId, now);
 });
 
 client.on('guildMemberAdd', async (member) => {
@@ -187,7 +209,7 @@ client.on('guildMemberAdd', async (member) => {
     if (channel) {
       await channel.send(`${userAd}\n\nPartnerstwo z: ${member}`);
       const dmChannel = await member.createDM();
-      await dmChannel.send("✅ Dziękujemy za partnerstwo");
+      await dmChannel.send("✅ Dziękujemy za partnerstwo!");
       partneringUsers.delete(member.id);
       partnershipTimestamps.set(member.id, Date.now());
     } else {
