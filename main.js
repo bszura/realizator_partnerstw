@@ -133,7 +133,8 @@ client.on('messageCreate', async (message) => {
 
       if (userAd === null) {
         partneringUsers.set(message.author.id, message.content);
-        await message.channel.send(`✅ Wstaw naszą reklamę:\n${serverAd}`);
+        await message.channel.send(`✅ Wstaw naszą reklamę:`);
+        await message.channel.send(`${serverAd}`);
         await message.channel.send("⏰ Daj znać, gdy wstawisz reklamę!");
       } else if (
         message.content.toLowerCase().includes('wstawi') ||
@@ -141,21 +142,11 @@ client.on('messageCreate', async (message) => {
         message.content.toLowerCase().includes('gotowe') ||
         message.content.toLowerCase().includes('juz')
       ) {
-        await message.channel.send("Czy wymagane jest dołączenie na twój serwer?");
-        const filter = m => m.author.id === message.author.id;
-        const reply = await message.channel.awaitMessages({ filter, max: 1, time: 60000 }).catch(() => null);
+        
 
-        if (!reply) {
-          await message.channel.send("⏰ Czas minął, spróbuj ponownie.");
-          partneringUsers.delete(message.author.id);
-          return;
-        }
 
-        if (!reply.first().content.toLowerCase().includes('nie')) {
-          await message.channel.send("Mój właściciel @bRtech za niedługo na pewno dołączy do twojego serwera");
-          const notificationUser = await client.users.fetch('782647700403257375');
-          await notificationUser.send(`Wymagane dołączenie na serwer:\n${userAd}`);
-        }
+        await message.channel.send("Za niedługo na pewno wbiję na twój serwer");
+        
 
         const guild = await client.guilds.fetch(GUILD_ID).catch(() => null);
         if (!guild) {
@@ -176,7 +167,7 @@ client.on('messageCreate', async (message) => {
         }
 
         await channel.send(`${userAd}\n\nPartnerstwo z: ${member}`);
-        await message.channel.send("✅ Dziękujemy za partnerstwo! W razie jakichkolwiek pytań prosimy o kontakt z użytkownikiem .b_r_tech. (bRtech)");
+        await message.channel.send("✅ Dziękujemy za partnerstwo!");
 
         partnershipTimestamps.set(message.author.id, now);
         partneringUsers.delete(message.author.id);
@@ -194,7 +185,7 @@ client.on('guildMemberAdd', async (member) => {
     if (channel) {
       await channel.send(`${userAd}\n\nPartnerstwo z: ${member}`);
       const dmChannel = await member.createDM();
-      await dmChannel.send("✅ Dziękujemy za dołączenie! Twoja reklama została wstawiona.");
+      await dmChannel.send("✅ Dziękujemy za partnerstwo");
       partneringUsers.delete(member.id);
       partnershipTimestamps.set(member.id, Date.now());
     } else {
