@@ -1,27 +1,37 @@
-
-const { Client, Intents } = require('discord.js-selfbot-v13');
-const { MessageEmbed } = require('discord.js-selfbot-v13');
+const { Client } = require('discord.js-selfbot-v13');
 const express = require('express');
+const { createClient } = require('@libsql/client');
 const app = express();
 const PORT = 8080;
-const Discord = require('discord.js-selfbot-v13');
 
 const client = new Client({
   checkUpdate: false,
   readyStatus: false,
 });
 
-app.get('/', (req, res) => {
-  res.send('Self-bot działa na Render! 🚀');
+// Turso DB
+const db = createClient({
+  url: process.env.TURSO_URL,
+  authToken: process.env.TURSO_TOKEN,
 });
 
-app.listen(PORT, () => {
-  console.log(`Serwer pingujący działa na porcie ${PORT}`);
-});
+async function initDB() {
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS partnership_reminders (
+      user_id TEXT PRIMARY KEY,
+      remind_at INTEGER
+    )
+  `);
+}
 
-client.once('ready', () => {
+app.get('/', (req, res) => res.send('Self-bot działa na Render! 🚀'));
+app.listen(PORT, () => console.log(`Serwer pingujący działa na porcie ${PORT}`));
+
+client.once('ready', async () => {
   console.log(`Zalogowano jako ${client.user.tag}!`);
   console.log(`Bot ${client.user.tag} jest gotowy.`);
+  await initDB();
+  startReminderChecker();
 });
 
 const serverAd = `
@@ -39,7 +49,6 @@ const serverAd = `
 > 💸 **︲** Aktualnie płacimy za __zaproszenia__ oraz napisanie __propozycji__
 > 📩 **︲** Poszukujemy Realizatorów Partnerstw, zarabiaj do 1.20 PLN za każde partnerstwo!
 
-
 ## 🛒 **︲ Dołącz do nas, aktualnie sprzedajemy N1tr0 za 17PLN - najtaniej na całym rynku - nie może cie zabraknąć:)**  
 👋 **︲ Do zobaczenia na serwerze!** 
 🔗 [Dołącz teraz!](https://discord.gg/ogtaniej)
@@ -49,8 +58,71 @@ const partneringUsers = new Map();
 const partnershipTimestamps = new Map();
 
 const PARTNERSHIP_COOLDOWN = 5 * 24 * 60 * 60 * 1000;
+// Na testy: 15 sekund. Na produkcję zmień na: 5 * 24 * 60 * 60 * 1000
+const REMINDER_DELAY = 15 * 1000;
 const PARTNER_CHANNEL_ID = '1485238096319746049';
 const GUILD_ID = '1484858033887510560';
+
+// Sprawdza co 10 sekund czy komuś minął czas przypomnienia
+function startReminderChecker() {
+  setInterval(async () => {
+    const now = Date.now();
+    const result = await db.execute({
+      sql: 'SELECT user_id FROM partnership_reminders WHERE remind_at <= ?',
+      args: [now],
+    });
+
+    for (const row of result.rows) {
+      const userId = row.user_id;
+      try {
+        const user = await client.users.fetch(userId);
+        const dm = await user.createDM();
+        await dm.send("Partnerstwo?");
+
+        // Usuń z bazy po wysłaniu
+        await db.execute({
+          sql: 'DELETE FROM partnership_reminders WHERE user_id = ?',
+          args: [userId],
+        });
+
+        // Zresetuj stan użytkownika żeby mógł zacząć od nowa
+        partneringUsers.delete(userId);
+        partnershipTimestamps.delete(userId);
+      } catch (e) {
+        console.error(`Błąd przypomnienia dla ${userId}:`, e.message);
+      }
+    }
+  }, 10 * 1000);
+}
+
+async function askForReminder(message, userId) {
+  const msg = await message.channel.send("🔔 Czy chcesz za 5 dni znowu nawiązać partnerstwo?\n✅ - Tak  |  ❌ - Nie");
+  await msg.react('✅');
+  await msg.react('❌');
+
+  const filter = (reaction, user) =>
+    ['✅', '❌'].includes(reaction.emoji.name) && user.id === userId;
+
+  const collected = await msg.awaitReactions({ filter, max: 1, time: 30000 }).catch(() => null);
+
+  if (!collected || collected.size === 0) {
+    await message.channel.send("⏰ Czas na odpowiedź minął. Dziękujemy za partnerstwo!");
+    return;
+  }
+
+  const reaction = collected.first().emoji.name;
+
+  if (reaction === '✅') {
+    const remindAt = Date.now() + REMINDER_DELAY;
+    await db.execute({
+      sql: 'INSERT OR REPLACE INTO partnership_reminders (user_id, remind_at) VALUES (?, ?)',
+      args: [userId, remindAt],
+    });
+    await message.channel.send("✅ Super! Przypomnę Ci o partnerstwie za 5 dni.");
+  } else {
+    await message.channel.send("👋 Rozumiem! Dziękujemy za partnerstwo. Do zobaczenia!");
+  }
+}
 
 client.on('messageCreate', async (message) => {
   if (!message.guild && !message.author.bot && message.author.id !== client.user.id) {
@@ -64,14 +136,13 @@ client.on('messageCreate', async (message) => {
 
     if (!partneringUsers.has(message.author.id)) {
       partneringUsers.set(message.author.id, null);
-      await message.channel.send("🌎 Jeśli chcesz nawiązać partnerstwo, musisz spełnić następujące warunki:\n1. Wstawić moją reklamę na kanał partnerski i mnie oznaczyć\n2. Wbić na mój serwer\n3.Nie wychodzić z serwera");
+      await message.channel.send("🌎 Jeśli chcesz nawiązać partnerstwo, wyślij swoją reklamę (maksymalnie 1 serwer).");
     } else {
       const userAd = partneringUsers.get(message.author.id);
 
       if (userAd === null) {
         partneringUsers.set(message.author.id, message.content);
-        await message.channel.send(`✅ Wstaw naszą reklamę`);
-        await message.channel.send(`${serverAd}`);
+        await message.channel.send(`✅ Wstaw naszą reklamę:\n${serverAd}`);
         await message.channel.send("⏰ Daj znać, gdy wstawisz reklamę!");
       } else if (
         message.content.toLowerCase().includes('wstawi') ||
@@ -79,9 +150,22 @@ client.on('messageCreate', async (message) => {
         message.content.toLowerCase().includes('gotowe') ||
         message.content.toLowerCase().includes('juz')
       ) {
-        
-        await message.channel.send("Za niedługo wbiję na twój serwer");
-        
+        await message.channel.send("Czy wymagane jest dołączenie na twój serwer?");
+        const filter = m => m.author.id === message.author.id;
+        const reply = await message.channel.awaitMessages({ filter, max: 1, time: 60000 }).catch(() => null);
+
+        if (!reply) {
+          await message.channel.send("⏰ Czas minął, spróbuj ponownie.");
+          partneringUsers.delete(message.author.id);
+          return;
+        }
+
+        if (!reply.first().content.toLowerCase().includes('nie')) {
+          await message.channel.send("Mój właściciel @bRtech za niedługo na pewno dołączy do twojego serwera");
+          const notificationUser = await client.users.fetch('782647700403257375');
+          await notificationUser.send(`Wymagane dołączenie na serwer:\n${userAd}`);
+        }
+
         const guild = await client.guilds.fetch(GUILD_ID).catch(() => null);
         if (!guild) {
           await message.channel.send("❕ Nie znaleziono serwera.");
@@ -101,10 +185,13 @@ client.on('messageCreate', async (message) => {
         }
 
         await channel.send(`${userAd}\n\nPartnerstwo z: ${member}`);
-        await message.channel.send("✅ Dziękujemy za partnerstwo! Czy chcesz za 5 dni ponownie je nawiązać?");
+        await message.channel.send("✅ Dziękujemy za partnerstwo! W razie jakichkolwiek pytań prosimy o kontakt z użytkownikiem .b_r_tech. (bRtech)");
 
         partnershipTimestamps.set(message.author.id, now);
         partneringUsers.delete(message.author.id);
+
+        // Pytanie o przypomnienie z reakcjami
+        await askForReminder(message, message.author.id);
       }
     }
   }
@@ -117,7 +204,7 @@ client.on('guildMemberAdd', async (member) => {
     if (channel) {
       await channel.send(`${userAd}\n\nPartnerstwo z: ${member}`);
       const dmChannel = await member.createDM();
-      await dmChannel.send("✅ Dziękujemy za partnerstwo! Czy chcesz za 5 dni ponownie je nawiązać?");
+      await dmChannel.send("✅ Dziękujemy za dołączenie! Twoja reklama została wstawiona.");
       partneringUsers.delete(member.id);
       partnershipTimestamps.set(member.id, Date.now());
     } else {
@@ -126,12 +213,7 @@ client.on('guildMemberAdd', async (member) => {
   }
 });
 
-client.on('error', (error) => {
-  console.error('Błąd Discorda:', error);
-});
-
-process.on('unhandledRejection', (error) => {
-  console.error('Nieobsłużony błąd:', error);
-});
+client.on('error', (error) => console.error('Błąd Discorda:', error));
+process.on('unhandledRejection', (error) => console.error('Nieobsłużony błąd:', error));
 
 client.login(process.env.DISCORD_TOKEN);
