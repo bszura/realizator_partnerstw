@@ -137,4 +137,50 @@ client.on('messageCreate', async (message) => {
       content.includes('wstawi') ||
       content.includes('już') ||
       content.includes('gotowe') ||
-      content.includes('
+      content.includes('juz');
+
+    if (!confirmed) return;
+
+    const guild = await client.guilds.fetch(GUILD_ID).catch(() => null);
+    if (guild) {
+      const member = await guild.members.fetch(userId).catch(() => null);
+      const channel = await guild.channels.fetch(PARTNER_CHANNEL_ID).catch(() => null);
+      if (channel) {
+        const mention = member ? `${member}` : message.author.username;
+        await channel.send(`${session.userAd}\n\nPartnerstwo z: ${mention}`);
+      }
+    }
+
+    partnershipTimestamps.set(userId, Date.now());
+    session.step = 3;
+
+    await message.channel.send("🔔 Czy chcesz za 5 dni znowu nawiązać partnerstwo? Wpisz **tak** lub **nie**.");
+    return;
+  }
+
+  // Krok 3: odpowiedź na pytanie o przypomnienie
+  if (session.step === 3) {
+    if (content.includes('tak')) {
+      const remindAt = Date.now() + REMINDER_DELAY;
+      await db.execute({
+        sql: 'INSERT OR REPLACE INTO partnership_reminders (user_id, remind_at) VALUES (?, ?)',
+        args: [userId, remindAt],
+      });
+      await message.channel.send("✅ Super! Przypomnę Ci o partnerstwie za 5 dni.");
+    } else if (content.includes('nie')) {
+      const remaining = timeUntilNextPartnership(userId);
+      await message.channel.send(`👋 Rozumiem! Kolejne partnerstwo możesz nawiązać za **${remaining}**.`);
+    } else {
+      await message.channel.send("❓ Wpisz **tak** lub **nie**.");
+      return;
+    }
+
+    sessions.delete(userId);
+    return;
+  }
+});
+
+client.on('error', (error) => console.error('Błąd Discorda:', error));
+process.on('unhandledRejection', (error) => console.error('Nieobsłużony błąd:', error));
+
+client.login(process.env.DISCORD_TOKEN);
