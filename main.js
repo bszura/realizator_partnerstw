@@ -24,6 +24,10 @@ async function initDB() {
 }
 
 app.get('/', (req, res) => res.send('Self-bot działa na Render! 🚀'));
+app.get('/reset-db', async (req, res) => {
+  await db.execute('DELETE FROM partnership_reminders');
+  res.send('Baza wyczyszczona!');
+});
 app.listen(PORT, () => console.log(`Serwer pingujący działa na porcie ${PORT}`));
 
 client.once('ready', async () => {
