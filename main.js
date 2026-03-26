@@ -24,37 +24,17 @@ async function initDB() {
 }
 
 app.get('/', (req, res) => res.send('Self-bot działa na Render! 🚀'));
-app.listen(PORT, () => console.log(`Serwer pingujący działa na porcie ${PORT}`));
+app.listen(PORT, () => console.log(`Serwer działa na porcie ${PORT}`));
 
 client.once('ready', async () => {
   console.log(`Zalogowano jako ${client.user.tag}!`);
-  console.log(`Bot ${client.user.tag} jest gotowy.`);
   await initDB();
   startReminderChecker();
 });
 
-const serverAd = `
-#  🦔︲Taniej! - Nie tylko z nazwy!
+const serverAd = `TWOJA REKLAMA`;
 
-## **⭐ ︲ Wiesz dlaczego klienci wybierają NAS?**
-
-> 💜 **︲** Profesjonalne podejście sprzedawców do użytkowników
-> 💸 **︲** Najniższe ceny na całym rynku - dlatego nazywamy się "Taniej!" 🙂
-> 📦 **︲** N1tr0 za 17PLN - działające na DOWOLNYM koncie
-> 🚚 **︲** Szeroka oferta: konta/waluty do gier, social boost itd.
-> 🎉 **︲** Regularne konkursy o dobre pieniądze
-> ✅ **︲** Właściciel posiada ponad **2800** potwierdzonych legitchecków
-> ⚡ **︲** Natychmiastowa odpowiedź na ticketach
-> 💸 **︲** Aktualnie płacimy za __zaproszenia__ oraz napisanie __propozycji__
-> 📩 **︲** Poszukujemy Realizatorów Partnerstw, zarabiaj do 1.20 PLN za każde partnerstwo!
-
-## 🛒 **︲ Dołącz do nas, aktualnie sprzedajemy N1tr0 za 17PLN - najtaniej na całym rynku - nie może cie zabraknąć:)**  
-👋 **︲ Do zobaczenia na serwerze!** 
-🔗 [Dołącz teraz!](https://discord.gg/ogtaniej)
-`;
-
-const PARTNERSHIP_COOLDOWN = 30 * 1000;
-// TESTY:
+const PARTNERSHIP_COOLDOWN = 30 * 1000; // 🔥 TESTY
 const REMINDER_DELAY = 30 * 1000;
 
 const PARTNER_CHANNEL_ID = '1485238096319746049';
@@ -70,13 +50,8 @@ function timeUntilNextPartnership(userId) {
   const remaining = last + PARTNERSHIP_COOLDOWN - Date.now();
   if (remaining <= 0) return null;
 
-  const days = Math.floor(remaining / (24 * 60 * 60 * 1000));
-  const hours = Math.floor((remaining % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
-  const minutes = Math.floor((remaining % (60 * 60 * 1000)) / (60 * 1000));
-
-  if (days > 0) return `${days} dni i ${hours} godzin`;
-  if (hours > 0) return `${hours} godzin i ${minutes} minut`;
-  return `${minutes} minut`;
+  const seconds = Math.floor(remaining / 1000);
+  return `${seconds} sekund`;
 }
 
 function startReminderChecker() {
@@ -91,25 +66,21 @@ function startReminderChecker() {
     for (const row of result.rows) {
       const userId = row.user_id;
 
-      try {
-        await db.execute({
-          sql: 'DELETE FROM partnership_reminders WHERE user_id = ?',
-          args: [userId],
-        });
+      await db.execute({
+        sql: 'DELETE FROM partnership_reminders WHERE user_id = ?',
+        args: [userId],
+      });
 
-        partnershipTimestamps.delete(userId);
+      partnershipTimestamps.delete(userId);
 
-        const user = await client.users.fetch(userId);
-        const dm = await user.createDM();
+      const user = await client.users.fetch(userId);
+      const dm = await user.createDM();
 
-        sessions.set(userId, { step: 1, userAd: null });
+      sessions.set(userId, { step: 1, userAd: null });
 
-        await dm.send("🌎 Jeśli chcesz nawiązać partnerstwo, wyślij swoją reklamę (maksymalnie 1 serwer).");
-      } catch (e) {
-        console.error(`Błąd przypomnienia dla ${userId}:`, e.message);
-      }
+      await dm.send("Jeśli chcesz nawiązać partnerstwo, wyślij swoją reklamę (maksymalnie 1 serwer).");
     }
-  }, 10 * 1000);
+  }, 5000);
 }
 
 client.on('messageCreate', async (message) => {
@@ -120,40 +91,41 @@ client.on('messageCreate', async (message) => {
   const userId = message.author.id;
   const content = message.content.toLowerCase();
 
-  // 🔒 SPRAWDZANIE COOLDOWNU
-  const remaining = timeUntilNextPartnership(userId);
-  if (remaining) {
-    await message.channel.send(`⏳ Kolejne partnerstwo możesz nawiązać za **${remaining}**.`);
-    return;
-  }
-
-  // Start nowej sesji
+  // ❗ COOLDOWN tylko gdy NIE MA SESJI
   if (!sessions.has(userId)) {
+    const remaining = timeUntilNextPartnership(userId);
+
+    if (remaining) {
+      await message.channel.send(`⏳ Możesz nawiązać kolejne partnerstwo za **${remaining}**.`);
+      return;
+    }
+
+    // start flow
     sessions.set(userId, { step: 1, userAd: null });
-    await message.channel.send("🌎 Jeśli chcesz nawiązać partnerstwo, wyślij swoją reklamę (maksymalnie 1 serwer).");
+    await message.channel.send("Jeśli chcesz nawiązać partnerstwo, wyślij swoją reklamę (maksymalnie 1 serwer).");
     return;
   }
 
   const session = sessions.get(userId);
 
-  // Krok 1
+  // 1️⃣ użytkownik wysyła reklamę
   if (session.step === 1) {
     session.userAd = message.content;
     session.step = 2;
 
-    await message.channel.send("✅ Wstaw naszą reklamę:");
+    await message.channel.send("Wstaw naszą reklamę:");
     await message.channel.send(serverAd);
-    await message.channel.send("⏰ Daj znać gdy wstawisz, wpisując np. **gotowe**.");
+    await message.channel.send("Daj znać gdy wstawisz, wpisując np. gotowe.");
     return;
   }
 
-  // Krok 2
+  // 2️⃣ potwierdzenie
   if (session.step === 2) {
     const confirmed =
-      content.includes('wstawi') ||
-      content.includes('już') ||
       content.includes('gotowe') ||
-      content.includes('juz');
+      content.includes('wstawi') ||
+      content.includes('juz') ||
+      content.includes('już');
 
     if (!confirmed) return;
 
@@ -169,15 +141,17 @@ client.on('messageCreate', async (message) => {
       }
     }
 
-    partnershipTimestamps.set(userId, Date.now());
     session.step = 3;
 
-    await message.channel.send("🔔 Czy chcesz za 5 dni znowu nawiązać partnerstwo? Wpisz **tak** lub **nie**.");
+    await message.channel.send("Czy chcesz za 5 dni znowu nawiązać partnerstwo? Wpisz tak lub nie.");
     return;
   }
 
-  // Krok 3
+  // 3️⃣ decyzja
   if (session.step === 3) {
+    // zapisujemy czas partnerstwa
+    partnershipTimestamps.set(userId, Date.now());
+
     if (content.includes('tak')) {
       const remindAt = Date.now() + REMINDER_DELAY;
 
@@ -186,21 +160,16 @@ client.on('messageCreate', async (message) => {
         args: [userId, remindAt],
       });
 
-      await message.channel.send("✅ Super! Przypomnę Ci o partnerstwie za 5 dni.");
+      await message.channel.send("OK, przypomnę Ci za 5 dni.");
     } else if (content.includes('nie')) {
-      const remaining = timeUntilNextPartnership(userId);
-      await message.channel.send(`👋 Rozumiem! Kolejne partnerstwo możesz nawiązać za **${remaining}**.`);
+      await message.channel.send("OK, dzięki za partnerstwo.");
     } else {
-      await message.channel.send("❓ Wpisz **tak** lub **nie**.");
+      await message.channel.send("Wpisz tak lub nie.");
       return;
     }
 
     sessions.delete(userId);
-    return;
   }
 });
-
-client.on('error', (error) => console.error('Błąd Discorda:', error));
-process.on('unhandledRejection', (error) => console.error('Nieobsłużony błąd:', error));
 
 client.login(process.env.DISCORD_TOKEN);
