@@ -53,7 +53,7 @@ const serverAd = `
 🔗 [Dołącz teraz!](https://discord.gg/ogtaniej)
 `;
 
-const PARTNERSHIP_COOLDOWN = 5 * 24 * 60 * 60 * 1000;
+const PARTNERSHIP_COOLDOWN = 30 * 1000;
 // TESTY:
 const REMINDER_DELAY = 30 * 1000;
 
