@@ -53,12 +53,28 @@ const serverAd = `
 🔗 [Dołącz teraz!](https://discord.gg/ogtaniej)
 `;
 
+const PARTNERSHIP_COOLDOWN = 5 * 24 * 60 * 60 * 1000;
 const REMINDER_DELAY = 30 * 1000; // testy: 30 sekund | produkcja: 5 * 24 * 60 * 60 * 1000
 const PARTNER_CHANNEL_ID = '1485238096319746049';
 const GUILD_ID = '1484858033887510560';
 
-// Przechowuje aktywne sesje partnerstwa: userId -> { step, userAd }
+// Sesje partnerstwa: userId -> { step, userAd }
 const sessions = new Map();
+// Timestamp ostatniego partnerstwa: userId -> timestamp
+const partnershipTimestamps = new Map();
+
+function timeUntilNextPartnership(userId) {
+  const last = partnershipTimestamps.get(userId);
+  if (!last) return null;
+  const remaining = last + PARTNERSHIP_COOLDOWN - Date.now();
+  if (remaining <= 0) return null;
+  const days = Math.floor(remaining / (24 * 60 * 60 * 1000));
+  const hours = Math.floor((remaining % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
+  const minutes = Math.floor((remaining % (60 * 60 * 1000)) / (60 * 1000));
+  if (days > 0) return `${days} dni i ${hours} godzin`;
+  if (hours > 0) return `${hours} godzin i ${minutes} minut`;
+  return `${minutes} minut`;
+}
 
 function startReminderChecker() {
   setInterval(async () => {
@@ -76,10 +92,12 @@ function startReminderChecker() {
           args: [userId],
         });
 
+        // Resetujemy timestamp żeby mógł nawiązać partnerstwo
+        partnershipTimestamps.delete(userId);
+
         const user = await client.users.fetch(userId);
         const dm = await user.createDM();
 
-        // Zacznij nową sesję partnerstwa
         sessions.set(userId, { step: 1, userAd: null });
         await dm.send("🌎 Jeśli chcesz nawiązać partnerstwo, wyślij swoją reklamę (maksymalnie 1 serwer).");
       } catch (e) {
@@ -97,8 +115,16 @@ client.on('messageCreate', async (message) => {
   const userId = message.author.id;
   const content = message.content.toLowerCase();
 
-  // Brak sesji — zacznij nową
+  // Brak sesji
   if (!sessions.has(userId)) {
+    // Sprawdź cooldown
+    const remaining = timeUntilNextPartnership(userId);
+    if (remaining) {
+      await message.channel.send(`⏳ Możesz nawiązać kolejne partnerstwo za **${remaining}**.`);
+      return;
+    }
+
+    // Krok 0: użytkownik napisał cokolwiek → startujemy
     sessions.set(userId, { step: 1, userAd: null });
     await message.channel.send("🌎 Jeśli chcesz nawiązać partnerstwo, wyślij swoją reklamę (maksymalnie 1 serwer).");
     return;
@@ -126,8 +152,6 @@ client.on('messageCreate', async (message) => {
 
     if (!confirmed) return;
 
-    session.step = 3;
-
     // Wyślij reklamę na kanał partnerski
     const guild = await client.guilds.fetch(GUILD_ID).catch(() => null);
     if (guild) {
@@ -138,6 +162,10 @@ client.on('messageCreate', async (message) => {
         await channel.send(`${session.userAd}\n\nPartnerstwo z: ${mention}`);
       }
     }
+
+    // Zapisz timestamp partnerstwa
+    partnershipTimestamps.set(userId, Date.now());
+    session.step = 3;
 
     await message.channel.send("🔔 Czy chcesz za 5 dni znowu nawiązać partnerstwo? Wpisz **tak** lub **nie**.");
     return;
@@ -152,14 +180,14 @@ client.on('messageCreate', async (message) => {
         args: [userId, remindAt],
       });
       await message.channel.send("✅ Super! Przypomnę Ci o partnerstwie za 5 dni.");
+      sessions.delete(userId);
     } else if (content.includes('nie')) {
-      await message.channel.send("👋 Rozumiem! Dziękujemy za partnerstwo. Do zobaczenia!");
+      const remaining = timeUntilNextPartnership(userId);
+      await message.channel.send(`👋 Rozumiem! Kolejne partnerstwo możesz nawiązać za **${remaining}**.`);
+      sessions.delete(userId);
     } else {
       await message.channel.send("❓ Wpisz **tak** lub **nie**.");
-      return; // czekaj na poprawną odpowiedź
     }
-
-    sessions.delete(userId);
     return;
   }
 });
