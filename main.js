@@ -26,6 +26,8 @@ async function initDB() {
 app.get('/', (req, res) => res.send('Self-bot działa na Render! 🚀'));
 app.listen(PORT, () => console.log(`Serwer pingujący działa na porcie ${PORT}`));
 
+const botStartTime = Date.now();
+
 client.once('ready', async () => {
   console.log(`Zalogowano jako ${client.user.tag}!`);
   console.log(`Bot ${client.user.tag} jest gotowy.`);
@@ -58,10 +60,6 @@ const REMINDER_DELAY = 30 * 1000;       // testy: 30 sekund | produkcja: 5 * 24 
 const PARTNER_CHANNEL_ID = '1485238096319746049';
 const GUILD_ID = '1484858033887510560';
 
-// step 0 = brak sesji
-// step 1 = czeka na reklamę
-// step 2 = czeka na "gotowe"
-// step 3 = czeka na "tak/nie" (przypomnienie)
 const sessions = new Map();
 const partnershipTimestamps = new Map();
 
@@ -114,14 +112,19 @@ client.on('messageCreate', async (message) => {
   if (message.author.bot) return;
   if (message.author.id === client.user.id) return;
 
+  // Ignoruj wiadomości wysłane przed startem bota
+  if (message.createdTimestamp < botStartTime) return;
+
   const userId = message.author.id;
   const content = message.content.toLowerCase();
 
-  // Sprawdź cooldown — jeśli aktywny, poinformuj i zakończ
-  const remaining = timeUntilNextPartnership(userId);
-  if (remaining) {
-    await message.channel.send(`⏳ Możesz nawiązać kolejne partnerstwo za **${remaining}**.`);
-    return;
+  // Sprawdź cooldown — tylko jeśli brak aktywnej sesji
+  if (!sessions.has(userId)) {
+    const remaining = timeUntilNextPartnership(userId);
+    if (remaining) {
+      await message.channel.send(`⏳ Możesz nawiązać kolejne partnerstwo za **${remaining}**.`);
+      return;
+    }
   }
 
   const session = sessions.get(userId) || { step: 0, userAd: null };
@@ -153,7 +156,6 @@ client.on('messageCreate', async (message) => {
 
     if (!confirmed) return;
 
-    // Wyślij reklamę na kanał partnerski
     const guild = await client.guilds.fetch(GUILD_ID).catch(() => null);
     if (guild) {
       const member = await guild.members.fetch(userId).catch(() => null);
@@ -164,7 +166,6 @@ client.on('messageCreate', async (message) => {
       }
     }
 
-    // Zapisz timestamp i przejdź do kroku 3
     partnershipTimestamps.set(userId, Date.now());
     session.step = 3;
 
