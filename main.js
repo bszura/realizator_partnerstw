@@ -53,11 +53,15 @@ const serverAd = `
 🔗 [Dołącz teraz!](https://discord.gg/ogtaniej)
 `;
 
-const PARTNERSHIP_COOLDOWN = 5 * 24 * 60 * 60 * 1000;
-const REMINDER_DELAY = 30 * 1000; // testy: 30 sekund | produkcja: 5 * 24 * 60 * 60 * 1000
+const PARTNERSHIP_COOLDOWN = 30 * 1000; // testy: 30 sekund | produkcja: 5 * 24 * 60 * 60 * 1000
+const REMINDER_DELAY = 30 * 1000;       // testy: 30 sekund | produkcja: 5 * 24 * 60 * 60 * 1000
 const PARTNER_CHANNEL_ID = '1485238096319746049';
 const GUILD_ID = '1484858033887510560';
 
+// step 0 = brak sesji
+// step 1 = czeka na reklamę
+// step 2 = czeka na "gotowe"
+// step 3 = czeka na "tak/nie" (przypomnienie)
 const sessions = new Map();
 const partnershipTimestamps = new Map();
 
@@ -69,9 +73,11 @@ function timeUntilNextPartnership(userId) {
   const days = Math.floor(remaining / (24 * 60 * 60 * 1000));
   const hours = Math.floor((remaining % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
   const minutes = Math.floor((remaining % (60 * 60 * 1000)) / (60 * 1000));
+  const seconds = Math.floor((remaining % (60 * 1000)) / 1000);
   if (days > 0) return `${days} dni i ${hours} godzin`;
   if (hours > 0) return `${hours} godzin i ${minutes} minut`;
-  return `${minutes} minut`;
+  if (minutes > 0) return `${minutes} minut i ${seconds} sekund`;
+  return `${seconds} sekund`;
 }
 
 function startReminderChecker() {
@@ -91,17 +97,16 @@ function startReminderChecker() {
         });
 
         partnershipTimestamps.delete(userId);
+        sessions.delete(userId);
 
         const user = await client.users.fetch(userId);
         const dm = await user.createDM();
-
-        sessions.set(userId, { step: 1, userAd: null });
-        await dm.send("🌎 Jeśli chcesz nawiązać partnerstwo, wyślij swoją reklamę (maksymalnie 1 serwer).");
+        await dm.send("⏰ Minęło 5 dni! Jeśli chcesz nawiązać partnerstwo, wyślij mi wiadomość.");
       } catch (e) {
         console.error(`Błąd przypomnienia dla ${userId}:`, e.message);
       }
     }
-  }, 10 * 1000);
+  }, 5 * 1000);
 }
 
 client.on('messageCreate', async (message) => {
@@ -112,16 +117,23 @@ client.on('messageCreate', async (message) => {
   const userId = message.author.id;
   const content = message.content.toLowerCase();
 
-  // Brak sesji → zacznij nową (bez sprawdzania cooldownu)
-  if (!sessions.has(userId)) {
+  // Sprawdź cooldown — jeśli aktywny, poinformuj i zakończ
+  const remaining = timeUntilNextPartnership(userId);
+  if (remaining) {
+    await message.channel.send(`⏳ Możesz nawiązać kolejne partnerstwo za **${remaining}**.`);
+    return;
+  }
+
+  const session = sessions.get(userId) || { step: 0, userAd: null };
+
+  // Krok 0 → 1: pierwsze wejście
+  if (session.step === 0) {
     sessions.set(userId, { step: 1, userAd: null });
     await message.channel.send("🌎 Jeśli chcesz nawiązać partnerstwo, wyślij swoją reklamę (maksymalnie 1 serwer).");
     return;
   }
 
-  const session = sessions.get(userId);
-
-  // Krok 1: użytkownik wysłał reklamę
+  // Krok 1 → 2: użytkownik wysłał reklamę
   if (session.step === 1) {
     session.userAd = message.content;
     session.step = 2;
@@ -131,7 +143,7 @@ client.on('messageCreate', async (message) => {
     return;
   }
 
-  // Krok 2: użytkownik potwierdził wstawienie
+  // Krok 2 → 3: użytkownik potwierdził wstawienie
   if (session.step === 2) {
     const confirmed =
       content.includes('wstawi') ||
@@ -141,6 +153,7 @@ client.on('messageCreate', async (message) => {
 
     if (!confirmed) return;
 
+    // Wyślij reklamę na kanał partnerski
     const guild = await client.guilds.fetch(GUILD_ID).catch(() => null);
     if (guild) {
       const member = await guild.members.fetch(userId).catch(() => null);
@@ -151,6 +164,7 @@ client.on('messageCreate', async (message) => {
       }
     }
 
+    // Zapisz timestamp i przejdź do kroku 3
     partnershipTimestamps.set(userId, Date.now());
     session.step = 3;
 
@@ -167,15 +181,13 @@ client.on('messageCreate', async (message) => {
         args: [userId, remindAt],
       });
       await message.channel.send("✅ Super! Przypomnę Ci o partnerstwie za 5 dni.");
+      sessions.delete(userId);
     } else if (content.includes('nie')) {
-      const remaining = timeUntilNextPartnership(userId);
-      await message.channel.send(`👋 Rozumiem! Kolejne partnerstwo możesz nawiązać za **${remaining}**.`);
+      await message.channel.send("👋 Rozumiem! Do zobaczenia!");
+      sessions.delete(userId);
     } else {
       await message.channel.send("❓ Wpisz **tak** lub **nie**.");
-      return;
     }
-
-    sessions.delete(userId);
     return;
   }
 });
