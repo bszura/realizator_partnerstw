@@ -58,9 +58,7 @@ const REMINDER_DELAY = 30 * 1000; // testy: 30 sekund | produkcja: 5 * 24 * 60 *
 const PARTNER_CHANNEL_ID = '1485238096319746049';
 const GUILD_ID = '1484858033887510560';
 
-// Sesje partnerstwa: userId -> { step, userAd }
 const sessions = new Map();
-// Timestamp ostatniego partnerstwa: userId -> timestamp
 const partnershipTimestamps = new Map();
 
 function timeUntilNextPartnership(userId) {
@@ -92,7 +90,6 @@ function startReminderChecker() {
           args: [userId],
         });
 
-        // Resetujemy timestamp żeby mógł nawiązać partnerstwo
         partnershipTimestamps.delete(userId);
 
         const user = await client.users.fetch(userId);
@@ -115,16 +112,8 @@ client.on('messageCreate', async (message) => {
   const userId = message.author.id;
   const content = message.content.toLowerCase();
 
-  // Brak sesji
+  // Brak sesji → zacznij nową (bez sprawdzania cooldownu)
   if (!sessions.has(userId)) {
-    // Sprawdź cooldown
-    const remaining = timeUntilNextPartnership(userId);
-    if (remaining) {
-      await message.channel.send(`⏳ Możesz nawiązać kolejne partnerstwo za **${remaining}**.`);
-      return;
-    }
-
-    // Krok 0: użytkownik napisał cokolwiek → startujemy
     sessions.set(userId, { step: 1, userAd: null });
     await message.channel.send("🌎 Jeśli chcesz nawiązać partnerstwo, wyślij swoją reklamę (maksymalnie 1 serwer).");
     return;
@@ -148,51 +137,4 @@ client.on('messageCreate', async (message) => {
       content.includes('wstawi') ||
       content.includes('już') ||
       content.includes('gotowe') ||
-      content.includes('juz');
-
-    if (!confirmed) return;
-
-    // Wyślij reklamę na kanał partnerski
-    const guild = await client.guilds.fetch(GUILD_ID).catch(() => null);
-    if (guild) {
-      const member = await guild.members.fetch(userId).catch(() => null);
-      const channel = await guild.channels.fetch(PARTNER_CHANNEL_ID).catch(() => null);
-      if (channel) {
-        const mention = member ? `${member}` : message.author.username;
-        await channel.send(`${session.userAd}\n\nPartnerstwo z: ${mention}`);
-      }
-    }
-
-    // Zapisz timestamp partnerstwa
-    partnershipTimestamps.set(userId, Date.now());
-    session.step = 3;
-
-    await message.channel.send("🔔 Czy chcesz za 5 dni znowu nawiązać partnerstwo? Wpisz **tak** lub **nie**.");
-    return;
-  }
-
-  // Krok 3: odpowiedź na pytanie o przypomnienie
-  if (session.step === 3) {
-    if (content.includes('tak')) {
-      const remindAt = Date.now() + REMINDER_DELAY;
-      await db.execute({
-        sql: 'INSERT OR REPLACE INTO partnership_reminders (user_id, remind_at) VALUES (?, ?)',
-        args: [userId, remindAt],
-      });
-      await message.channel.send("✅ Super! Przypomnę Ci o partnerstwie za 5 dni.");
-      sessions.delete(userId);
-    } else if (content.includes('nie')) {
-      const remaining = timeUntilNextPartnership(userId);
-      await message.channel.send(`👋 Rozumiem! Kolejne partnerstwo możesz nawiązać za **${remaining}**.`);
-      sessions.delete(userId);
-    } else {
-      await message.channel.send("❓ Wpisz **tak** lub **nie**.");
-    }
-    return;
-  }
-});
-
-client.on('error', (error) => console.error('Błąd Discorda:', error));
-process.on('unhandledRejection', (error) => console.error('Nieobsłużony błąd:', error));
-
-client.login(process.env.DISCORD_TOKEN);
+      content.includes('
