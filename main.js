@@ -54,7 +54,9 @@ const serverAd = `
 `;
 
 const PARTNERSHIP_COOLDOWN = 5 * 24 * 60 * 60 * 1000;
-const REMINDER_DELAY = 30 * 1000; // testy: 30 sekund | produkcja: 5 * 24 * 60 * 60 * 1000
+// TESTY:
+const REMINDER_DELAY = 30 * 1000;
+
 const PARTNER_CHANNEL_ID = '1485238096319746049';
 const GUILD_ID = '1484858033887510560';
 
@@ -64,11 +66,14 @@ const partnershipTimestamps = new Map();
 function timeUntilNextPartnership(userId) {
   const last = partnershipTimestamps.get(userId);
   if (!last) return null;
+
   const remaining = last + PARTNERSHIP_COOLDOWN - Date.now();
   if (remaining <= 0) return null;
+
   const days = Math.floor(remaining / (24 * 60 * 60 * 1000));
   const hours = Math.floor((remaining % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
   const minutes = Math.floor((remaining % (60 * 60 * 1000)) / (60 * 1000));
+
   if (days > 0) return `${days} dni i ${hours} godzin`;
   if (hours > 0) return `${hours} godzin i ${minutes} minut`;
   return `${minutes} minut`;
@@ -77,6 +82,7 @@ function timeUntilNextPartnership(userId) {
 function startReminderChecker() {
   setInterval(async () => {
     const now = Date.now();
+
     const result = await db.execute({
       sql: 'SELECT user_id FROM partnership_reminders WHERE remind_at <= ?',
       args: [now],
@@ -84,6 +90,7 @@ function startReminderChecker() {
 
     for (const row of result.rows) {
       const userId = row.user_id;
+
       try {
         await db.execute({
           sql: 'DELETE FROM partnership_reminders WHERE user_id = ?',
@@ -96,6 +103,7 @@ function startReminderChecker() {
         const dm = await user.createDM();
 
         sessions.set(userId, { step: 1, userAd: null });
+
         await dm.send("🌎 Jeśli chcesz nawiązać partnerstwo, wyślij swoją reklamę (maksymalnie 1 serwer).");
       } catch (e) {
         console.error(`Błąd przypomnienia dla ${userId}:`, e.message);
@@ -112,7 +120,14 @@ client.on('messageCreate', async (message) => {
   const userId = message.author.id;
   const content = message.content.toLowerCase();
 
-  // Brak sesji → zacznij nową (bez sprawdzania cooldownu)
+  // 🔒 SPRAWDZANIE COOLDOWNU
+  const remaining = timeUntilNextPartnership(userId);
+  if (remaining) {
+    await message.channel.send(`⏳ Kolejne partnerstwo możesz nawiązać za **${remaining}**.`);
+    return;
+  }
+
+  // Start nowej sesji
   if (!sessions.has(userId)) {
     sessions.set(userId, { step: 1, userAd: null });
     await message.channel.send("🌎 Jeśli chcesz nawiązać partnerstwo, wyślij swoją reklamę (maksymalnie 1 serwer).");
@@ -121,17 +136,18 @@ client.on('messageCreate', async (message) => {
 
   const session = sessions.get(userId);
 
-  // Krok 1: użytkownik wysłał reklamę
+  // Krok 1
   if (session.step === 1) {
     session.userAd = message.content;
     session.step = 2;
+
     await message.channel.send("✅ Wstaw naszą reklamę:");
     await message.channel.send(serverAd);
     await message.channel.send("⏰ Daj znać gdy wstawisz, wpisując np. **gotowe**.");
     return;
   }
 
-  // Krok 2: użytkownik potwierdził wstawienie
+  // Krok 2
   if (session.step === 2) {
     const confirmed =
       content.includes('wstawi') ||
@@ -142,9 +158,11 @@ client.on('messageCreate', async (message) => {
     if (!confirmed) return;
 
     const guild = await client.guilds.fetch(GUILD_ID).catch(() => null);
+
     if (guild) {
       const member = await guild.members.fetch(userId).catch(() => null);
       const channel = await guild.channels.fetch(PARTNER_CHANNEL_ID).catch(() => null);
+
       if (channel) {
         const mention = member ? `${member}` : message.author.username;
         await channel.send(`${session.userAd}\n\nPartnerstwo z: ${mention}`);
@@ -158,14 +176,16 @@ client.on('messageCreate', async (message) => {
     return;
   }
 
-  // Krok 3: odpowiedź na pytanie o przypomnienie
+  // Krok 3
   if (session.step === 3) {
     if (content.includes('tak')) {
       const remindAt = Date.now() + REMINDER_DELAY;
+
       await db.execute({
         sql: 'INSERT OR REPLACE INTO partnership_reminders (user_id, remind_at) VALUES (?, ?)',
         args: [userId, remindAt],
       });
+
       await message.channel.send("✅ Super! Przypomnę Ci o partnerstwie za 5 dni.");
     } else if (content.includes('nie')) {
       const remaining = timeUntilNextPartnership(userId);
