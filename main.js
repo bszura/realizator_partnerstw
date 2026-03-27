@@ -21,6 +21,39 @@ async function initDB() {
       remind_at INTEGER
     )
   `);
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS partnership_cooldowns (
+      user_id TEXT PRIMARY KEY,
+      last_partnership INTEGER
+    )
+  `);
+}
+
+async function getCooldown(userId) {
+  try {
+    const result = await db.execute({
+      sql: 'SELECT last_partnership FROM partnership_cooldowns WHERE user_id = ?',
+      args: [userId],
+    });
+    if (result.rows.length === 0) return null;
+    return result.rows[0].last_partnership;
+  } catch (e) {
+    return null;
+  }
+}
+
+async function setCooldown(userId) {
+  await db.execute({
+    sql: 'INSERT OR REPLACE INTO partnership_cooldowns (user_id, last_partnership) VALUES (?, ?)',
+    args: [userId, Date.now()],
+  });
+}
+
+async function deleteCooldown(userId) {
+  await db.execute({
+    sql: 'DELETE FROM partnership_cooldowns WHERE user_id = ?',
+    args: [userId],
+  });
 }
 
 app.get('/', (req, res) => res.send('Self-bot działa na Render! 🚀'));
@@ -61,10 +94,9 @@ const PARTNER_CHANNEL_ID = '1485238096319746049';
 const GUILD_ID = '1484858033887510560';
 
 const sessions = new Map();
-const partnershipTimestamps = new Map();
 
-function timeUntilNextPartnership(userId) {
-  const last = partnershipTimestamps.get(userId);
+async function timeUntilNextPartnership(userId) {
+  const last = await getCooldown(userId);
   if (!last) return null;
   const remaining = last + PARTNERSHIP_COOLDOWN - Date.now();
   if (remaining <= 0) return null;
@@ -94,7 +126,7 @@ function startReminderChecker() {
           args: [userId],
         });
 
-        partnershipTimestamps.delete(userId);
+        await deleteCooldown(userId);
         sessions.delete(userId);
 
         const user = await client.users.fetch(userId);
@@ -111,8 +143,6 @@ client.on('messageCreate', async (message) => {
   if (message.guild) return;
   if (message.author.bot) return;
   if (message.author.id === client.user.id) return;
-
-  // Ignoruj wiadomości wysłane przed startem bota
   if (message.createdTimestamp < botStartTime) return;
 
   const userId = message.author.id;
@@ -120,7 +150,7 @@ client.on('messageCreate', async (message) => {
 
   // Sprawdź cooldown — tylko jeśli brak aktywnej sesji
   if (!sessions.has(userId)) {
-    const remaining = timeUntilNextPartnership(userId);
+    const remaining = await timeUntilNextPartnership(userId);
     if (remaining) {
       await message.channel.send(`⏳ Możesz nawiązać kolejne partnerstwo za **${remaining}**.`);
       return;
@@ -166,7 +196,7 @@ client.on('messageCreate', async (message) => {
       }
     }
 
-    partnershipTimestamps.set(userId, Date.now());
+    await setCooldown(userId);
     session.step = 3;
 
     await message.channel.send("🔔 Czy chcesz za 5 dni znowu nawiązać partnerstwo? Wpisz **tak** lub **nie**.");
