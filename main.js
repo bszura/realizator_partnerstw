@@ -187,15 +187,24 @@ client.on('messageCreate', async (message) => {
     if (!confirmed) return;
 
     const guild = await client.guilds.fetch(GUILD_ID).catch(() => null);
-    if (guild) {
-      const member = await guild.members.fetch(userId).catch(() => null);
-      const channel = await guild.channels.fetch(PARTNER_CHANNEL_ID).catch(() => null);
-      if (channel) {
-        const mention = member ? `${member}` : message.author.username;
-        await channel.send(`${session.userAd}\n\nPartnerstwo z: ${mention}`);
-      }
+    if (!guild) {
+      await message.channel.send("❕ Nie znaleziono serwera.");
+      return;
     }
 
+    const member = await guild.members.fetch(userId).catch(() => null);
+    if (!member) {
+      await message.channel.send("❕ Dołącz na serwer, aby kontynuować!");
+      return;
+    }
+
+    const channel = await guild.channels.fetch(PARTNER_CHANNEL_ID).catch(() => null);
+    if (!channel) {
+      await message.channel.send("❕ Nie znaleziono kanału partnerskiego.");
+      return;
+    }
+
+    await channel.send(`${session.userAd}\n\nPartnerstwo z: ${member}`);
     await setCooldown(userId);
     session.step = 3;
 
