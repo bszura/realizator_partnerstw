@@ -234,5 +234,10 @@ client.on('messageCreate', async (message) => {
 
 client.on('error', (error) => console.error('Błąd Discorda:', error));
 process.on('unhandledRejection', (error) => console.error('Nieobsłużony błąd:', error));
-
+console.log('Próbuję się zalogować...');
+client.login(process.env.DISCORD_TOKEN).then(() => {
+  console.log('Login promise resolved');
+}).catch((e) => {
+  console.error('Błąd logowania:', e.message);
+});
 client.login(process.env.DISCORD_TOKEN);
