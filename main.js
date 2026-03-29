@@ -66,6 +66,12 @@ client.once('ready', async () => {
   console.log(`Bot ${client.user.tag} jest gotowy.`);
   await initDB();
   startReminderChecker();
+
+  // Wiadomość co 1h 1min
+  setInterval(async () => {
+    const channel = await client.channels.fetch('1346609247869337701').catch(() => null);
+    if (channel) await channel.send('# Partnerstwo PV');
+  }, 61 * 60 * 1000);
 });
 
 const serverAd = `
@@ -88,9 +94,9 @@ const serverAd = `
 🔗 [Dołącz teraz!](https://discord.gg/ogtaniej)
 `;
 
-const PARTNERSHIP_COOLDOWN = 30 * 1000; // testy: 30 sekund | produkcja: 5 * 24 * 60 * 60 * 1000
-const REMINDER_DELAY = 30 * 1000;       // testy: 30 sekund | produkcja: 5 * 24 * 60 * 60 * 1000
-const PARTNER_CHANNEL_ID = '1485238096319746049';
+const PARTNERSHIP_COOLDOWN = 3 * 24 * 60 * 60 * 1000; // 3 dni
+const REMINDER_DELAY = 3 * 24 * 60 * 60 * 1000;       // 3 dni
+const PARTNER_CHANNEL_ID = '1487559123166822460';
 const GUILD_ID = '1484858033887510560';
 
 const sessions = new Map();
@@ -131,7 +137,7 @@ function startReminderChecker() {
 
         const user = await client.users.fetch(userId);
         const dm = await user.createDM();
-        await dm.send("⏰ Minęło 5 dni! Jeśli chcesz nawiązać partnerstwo, wyślij mi wiadomość.");
+        await dm.send("⏰ Minęły 3 dni! Jeśli chcesz nawiązać partnerstwo, wyślij mi wiadomość.");
       } catch (e) {
         console.error(`Błąd przypomnienia dla ${userId}:`, e.message);
       }
@@ -208,7 +214,7 @@ client.on('messageCreate', async (message) => {
     await setCooldown(userId);
     session.step = 3;
 
-    await message.channel.send("🔔 Czy chcesz za 5 dni znowu nawiązać partnerstwo? Wpisz **tak** lub **nie**.");
+    await message.channel.send("🔔 Czy chcesz za 3 dni znowu nawiązać partnerstwo? Wpisz **tak** lub **nie**.");
     return;
   }
 
@@ -220,7 +226,7 @@ client.on('messageCreate', async (message) => {
         sql: 'INSERT OR REPLACE INTO partnership_reminders (user_id, remind_at) VALUES (?, ?)',
         args: [userId, remindAt],
       });
-      await message.channel.send("✅ Super! Przypomnę Ci o partnerstwie za 5 dni.");
+      await message.channel.send("✅ Super! Przypomnę Ci o partnerstwie za 3 dni.");
       sessions.delete(userId);
     } else if (content.includes('nie')) {
       await message.channel.send("👋 Rozumiem! Do zobaczenia!");
@@ -234,10 +240,10 @@ client.on('messageCreate', async (message) => {
 
 client.on('error', (error) => console.error('Błąd Discorda:', error));
 process.on('unhandledRejection', (error) => console.error('Nieobsłużony błąd:', error));
+
 console.log('Próbuję się zalogować...');
 client.login(process.env.DISCORD_TOKEN).then(() => {
   console.log('Login promise resolved');
 }).catch((e) => {
   console.error('Błąd logowania:', e.message);
 });
-client.login(process.env.DISCORD_TOKEN);
