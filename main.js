@@ -70,7 +70,7 @@ client.once('ready', async () => {
   // Wiadomość co 1h 1min
   setInterval(async () => {
     const channel = await client.channels.fetch('1346609247869337701').catch(() => null);
-    if (channel) await channel.send('# Partnerstwo PV');
+    if (channel) await channel.send('# Partnerstwo PV\nWymagania:\n1. Minimum 100 osób\n2. Oznaczenie mnie w reklamie\n3. Pozostanie na serwerze');
   }, 61 * 60 * 1000);
 });
 
