@@ -7,6 +7,11 @@ const PORT = 8080;
 const client = new Client({
   checkUpdate: false,
   readyStatus: false,
+  ws: {
+    properties: {
+      browser: 'Discord iOS',
+    }
+  }
 });
 
 const db = createClient({
