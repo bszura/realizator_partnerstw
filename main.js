@@ -73,7 +73,7 @@ client.once('ready', async () => {
   startReminderChecker();
 
   const sendPartnershipPV = async () => {
-    const channel = await client.channels.fetch('1346609247869337701').catch(() => null);
+    const channel = await client.channels.fetch('1418148557902581800').catch(() => null);
     if (channel) {
       await channel.send('# Partnerstwo PV');
       console.log(`[${new Date().toLocaleTimeString()}] Wysłano "Partnerstwo PV"`);
@@ -109,7 +109,7 @@ const serverAd = `
 const PARTNERSHIP_COOLDOWN = 3 * 24 * 60 * 60 * 1000; // 3 dni
 const REMINDER_DELAY = 3 * 24 * 60 * 60 * 1000;       // 3 dni
 const PARTNER_CHANNEL_ID = '1487559123166822460';
-const GUILD_ID = '1484858033887510560';
+const GUILD_ID = '1389647013070639224';
 
 const sessions = new Map();
 
