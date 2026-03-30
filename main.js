@@ -73,7 +73,7 @@ client.once('ready', async () => {
   startReminderChecker();
 
   const sendPartnershipPV = async () => {
-    const channel = await client.channels.fetch('1418148492299337768').catch(() => null);
+    const channel = await client.channels.fetch('1463018298471092434').catch(() => null);
     if (channel) {
       await channel.send('# Partnerstwo PV');
       console.log(`[${new Date().toLocaleTimeString()}] Wysłano "Partnerstwo PV"`);
