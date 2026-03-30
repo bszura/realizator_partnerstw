@@ -73,7 +73,7 @@ client.once('ready', async () => {
   startReminderChecker();
 
   const sendPartnershipPV = async () => {
-    const channel = await client.channels.fetch('1418148557902581800').catch(() => null);
+    const channel = await client.channels.fetch('1418148492299337768').catch(() => null);
     if (channel) {
       await channel.send('# Partnerstwo PV');
       console.log(`[${new Date().toLocaleTimeString()}] Wysłano "Partnerstwo PV"`);
@@ -91,19 +91,20 @@ const serverAd = `
 
 ## **⭐ ︲ Wiesz dlaczego klienci wybierają NAS?**
 
-> 💜 **︲** Profesjonalne podejście sprzedawców do użytkowników
-> 💸 **︲** Najniższe ceny na całym rynku - dlatego nazywamy się "Taniej!" 🙂
-> 📦 **︲** N1tr0 za 17PLN - działające na DOWOLNYM koncie
-> 🚚 **︲** Szeroka oferta: konta/waluty do gier, social boost itd.
-> 🎉 **︲** Regularne konkursy o dobre pieniądze
-> ✅ **︲** Właściciel posiada ponad **2800** potwierdzonych legitchecków
-> ⚡ **︲** Natychmiastowa odpowiedź na ticketach
-> 💸 **︲** Aktualnie płacimy za __zaproszenia__ oraz napisanie __propozycji__
-> 📩 **︲** Poszukujemy Realizatorów Partnerstw, zarabiaj do 1.20 PLN za każde partnerstwo!
+> `💜` **︲** Profesjonalne podejście sprzedawców do użytkowników
+> `💸` **︲** Najniższe ceny na całym rynku - dlatego nazywamy się "Taniej!" 🙂
+> `📦` **︲** N1tr0 za 17PLN - działające na DOWOLNYM koncie
+> `🚚` **︲** Szeroka oferta: konta/waluty do gier, social boost itd.
+> `🎉` **︲** Regularne konkursy o dobre pieniądze
+> `✅` **︲** Właściciel posiada ponad **2800** potwierdzonych legitchecków
+> `⚡` **︲** Natychmiastowa odpowiedź na ticketach
+> `💸` **︲** Aktualnie płacimy za __zaproszenia__ oraz napisanie __propozycji__
+> `📩` **︲** Poszukujemy Realizatorów Partnerstw, zarabiaj do 1.20 PLN za każde partnerstwo!
 
-## 🛒 **︲ Dołącz do nas, aktualnie sprzedajemy N1tr0 za 17PLN - najtaniej na całym rynku - nie może cie zabraknąć:)**  
-👋 **︲ Do zobaczenia na serwerze!** 
-🔗 [Dołącz teraz!](https://discord.gg/ogtaniej)
+
+## `🛒` **︲ Dołącz do nas, aktualnie sprzedajemy N1tr0 za 17PLN - najtaniej na całym rynku - nie może cie zabraknąć:)**  
+`👋` **︲ Do zobaczenia na serwerze!** 
+`🔗` [Dołącz teraz!](https://discord.gg/ogtaniej)
 `;
 
 const PARTNERSHIP_COOLDOWN = 3 * 24 * 60 * 60 * 1000; // 3 dni
@@ -238,10 +239,10 @@ client.on('messageCreate', async (message) => {
         sql: 'INSERT OR REPLACE INTO partnership_reminders (user_id, remind_at) VALUES (?, ?)',
         args: [userId, remindAt],
       });
-      await message.channel.send("✅ Super! Przypomnę Ci o partnerstwie za 3 dni.");
+      await message.channel.send("✅ Super! Przypomnę Ci o partnerstwie za 3 dni. Za niedługo wbiję na twój serwer");
       sessions.delete(userId);
     } else if (content.includes('nie')) {
-      await message.channel.send("👋 Rozumiem! Do zobaczenia!");
+      await message.channel.send("👋 Rozumiem! Do zobaczenia! Za niedługo wbiję na twój serwer");
       sessions.delete(userId);
     } else {
       await message.channel.send("❓ Wpisz **tak** lub **nie**.");
