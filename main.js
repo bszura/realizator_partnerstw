@@ -9,7 +9,7 @@ const client = new Client({
   readyStatus: false,
   ws: {
     properties: {
-      browser: 'Discord iOS',
+      browser: 'Discord Client',
     }
   }
 });
