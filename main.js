@@ -186,14 +186,18 @@ client.on('messageCreate', async (message) => {
   }
 
   // Krok 1 → 2: użytkownik wysłał reklamę
-  if (session.step === 1) {
-    session.userAd = message.content;
-    session.step = 2;
-    await message.channel.send("✅ Wstaw naszą reklamę:");
-    await message.channel.send(serverAd);
-    await message.channel.send("⏰ Daj znać gdy wstawisz, wpisując np. **gotowe**.");
+if (session.step === 1) {
+  if (message.content.length < 20) {
+    await message.channel.send("🤔 Hmm, to nie wygląda jak reklama. Wyślij pełną reklamę swojego serwera.");
     return;
   }
+  session.userAd = message.content;
+  session.step = 2;
+  await message.channel.send("✅ Wstaw naszą reklamę:");
+  await message.channel.send(serverAd);
+  await message.channel.send("⏰ Daj znać gdy wstawisz, wpisując np. **gotowe**.");
+  return;
+}
 
   // Krok 2 → 3: użytkownik potwierdził wstawienie
   if (session.step === 2) {
