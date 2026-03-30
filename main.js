@@ -83,7 +83,7 @@ client.once('ready', async () => {
   };
 
   await sendPartnershipPV();
-  setInterval(sendPartnershipPV, 31 * 60 * 1000); // 31 minut
+  setInterval(sendPartnershipPV, 121 * 60 * 1000); // 121 minut
 });
 
 const serverAd = `
