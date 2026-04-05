@@ -28,19 +28,6 @@ async function initDB() {
   `);
 }
 
-async function getReminder(userId) {
-  try {
-    const result = await db.execute({
-      sql: 'SELECT remind_at FROM partnership_reminders WHERE user_id = ?',
-      args: [userId],
-    });
-    if (result.rows.length === 0) return null;
-    return result.rows[0].remind_at;
-  } catch (e) {
-    return null;
-  }
-}
-
 async function setReminder(userId, remindAt) {
   await db.execute({
     sql: 'INSERT OR REPLACE INTO partnership_reminders (user_id, remind_at) VALUES (?, ?)',
@@ -66,6 +53,8 @@ client.once('ready', async () => {
   await initDB();
   startReminderChecker();
 });
+
+// ===================== REKLAMY =====================
 
 const ad1 = `# 🌨️❄️ 𝒁𝒊𝒎𝒐𝒘𝒆 ⛄ 𝑹𝒆𝒌𝒍𝒂𝒎𝒚 ❄️🌨️
 > ✩ Poszukujesz idealnego serwera *reklamowego*, na którym widnieje wspaniała społeczność?
@@ -114,11 +103,137 @@ const ad2 = `#  🦔︲Taniej! - Nie tylko z nazwy!
 \`👋\` **︲ Do zobaczenia na serwerze!** 
 - \`🔗\` [Dołącz teraz!](https://discord.gg/ogtaniej)`;
 
-const REMINDER_DELAY = 5 * 24 * 60 * 60 * 1000; // 5 dni
-const PARTNER_CHANNELS = ['1442908672899547187', '1487559123166822460'];
+const ad3 = `#  🛒 CHERRY SHØP  🛒
+## 💸 ⨯ Najlepsza Jakość | Najlepsze Ceny | Błyskawiczna Obsługa
+## **🤔 ⨯ Co znajdziesz na naszym serwerze?**
+> \`⭐\` **⨯** Mega niskie ceny i ekspresowa realizacja zamówień!
+> \`🔧\` **⨯** Dopracowany serwer z profesjonalnym podejściem!
+> \`📦\` **⨯** Szeroka oferta pr0duktów!
+> \`🎉\` **⨯** Konkursy ze świetnymi nagrodami!
+> \`✅\` **⨯** Duża ilość legit checków.
+> \`💸\` **⨯** Program partnerski - zarabiaj 0,70 PLN za każde partnerstwo!
+## **✨ ⨯ Część naszego asortymentu:**
+- \`🛒\` **⨯** **USŁUGI D1SC0RD** -  S3rver B00sty, d3koracje, k0nta D1sc0rd, użytkownicy na serwer oraz N1tr0 B00ST za jedynie __18 PLN!__
+- \`🎬\` **⨯** **PLATFORMY VOD** - Netflix, HBO Max, Disney, Canal+ i inne - oglądaj taniej, bez ograniczeń!
+- \`📚\` **⨯** **NARZĘDZIA EDUKACYJNE** – K0nta ChatGPT, Odrabiamy oraz inne usługi pomocne w nauce czy pisaniu prac!
+- \`💸\` **⨯** **D0ŁADOWANIA DO GIER** - Nie przepłacaj u twórców - kupuj u nas, zawsze w dobrej cenie!
+- \`📢\` **⨯** **S0CIAL B00STING** - Obserwacje, polubienia i wyświetlenia na wielu platformach, rozwiń swoje profile!
+- \`🌍\` **⨯** **PRYWATNOŚĆ W SIECI** - Zakup odpowiedniego VPN - chroń swoją obecność w sieci!
+- \`📲\` **⨯**  **WERYFIKACJA SMS** - Szybkie numery tymczasowe do rejestracji wszędzie, gdzie potrzebujesz!
+## \`🛒\` **⨯ DOŁĄCZ DO NAS I KUPUJ W ŚWIETNYCH CENACH!**  
+\`👋\` **⨯ Do zobaczenia na serwerze!** 
+\`🔗\` [Dołącz teraz!](https://discord.gg/cherryshop)`;
 
-// Przechowuje userId → oczekuje na odpowiedź "tak/nie" dla !odnowa
+const ad4 = `# 💱 WITAJ NA WYMIENIASZ 💱
+**Miejsce stworzone dla ludzi, którzy chcą wymieniać szybko, bezpiecznie i bez zbędnego gadania.**
+|| @everyone ||
+### Dlaczego Wymieniasz?
+**– Przejrzyste zasady i uczciwe prowizje
+– Szybkie realizacje bez przeciągania w czasie
+– Zweryfikowani realizatorzy i bezpieczny system ticketów
+– Regularne konkursy i eventy dla aktywnych
+– Stały rozwój serwera**
+## AKTUALNIE TRWA KONKURS NA 50 PLN
+https://discord.gg/wymieniasz`;
+
+const ad5 = `## 💥 💰 ZGARNIJ KASĘ ZA OPINIĘ! 💰💥
+** 3 ZŁOTE za JEDNĄ OPINIĘ – LEGALNIE, SZYBKO, BEZ KOMPLIKACJI! 🔥**
+👀 Masz 2 minuty?
+💬 Masz coś do powiedzenia?
+📲 Masz Discorda?
+\`TO ZARABIASZ!\`
+Nie musisz inwestować ani złotówki – wystarczy, że podzielisz się swoją opinią!
+**✅ CO OFERUJEMY?**
+🔹 3 ZŁ za każdą zaakceptowaną opinię
+🔹 Proste zadania, zero ściemy
+🔹 Płacimy na: BLIK  / PayPal / Kod Blik/LTC
+🔹 Nowe zadania codziennie!
+🔹 Przyjazna ekipa i pomoc dla nowych
+**💡 JAK DOŁĄCZYĆ?**
+Kliknij link do serwera Discord 👉 https://discord.gg/AEUuHhh38Q
+Przeczytaj zasady i zacznij zarabiać!
+🌟 Już wiele użytkowników z nami zarabia 
+💸 Nie trać czasu – twoja opinia = twoje pieniądze!
+**🔔 DOŁĄCZ TERAZ I ZGARNIJ SWOJE PIERWSZE 3 ZŁ W PARĘ MINUT! 🔔**
+**Szukamy Realizatorow partnerstw 80gr/Partnerstwo**`;
+
+const ad6 = `## \`🛒\` **CITSH0P** × CENTRUM ZAKUPÓW
+\`🎯\` **× Dlaczego my?**
+\`⏰\` **×** Najdłużej na rynku!
+-# Jesteśmy na rynku od ponad roku!
+\`💸\` **×** Najtaniej w Polsce!
+-# Nasz cennik jest najbardziej korzystny!
+\`✅\` **×** Najbardziej zaufany!
+-# Posiadamy legitne, doświadczone grono sprzedawców!
+\`🫡\` **×** Najwyższa jakość!
+-# Większość naszych produktów jest objęta gwarancją!
+> **Zapraszamy Cię do naszej społeczności!**
+> https://discord.gg/citshop`;
+
+const ad7 = `#  🛒 SZYBKI ZAKUP 🛒
+## 💸 ⨯ Najlepsza Jakość | Najlepsze Ceny | Błyskawiczna Obsługa
+## **🤔 ⨯ Co znajdziesz na naszym serwerze?**
+> \`⭐\` **⨯** Mega niskie ceny i ekspresowa realizacja zamówień!
+> \`🔧\` **⨯** Dopracowany serwer z profesjonalnym podejściem!
+> \`📦\` **⨯** Szeroka oferta pr0duktów!
+> \`🎉\` **⨯** Konkursy ze świetnymi nagrodami!
+> \`✅\` **⨯** Duża ilość legit checków.
+> \`💸\` **⨯** Program partnerski - zarabiaj 0,40 PLN za każde partnerstwo!
+## **✨ ⨯ Część naszego asortymentu:**
+- \`🛒\` **⨯** **USŁUGI D1SC0RD** -  S3rver B00sty, d3koracje, k0nta D1sc0rd, użytkownicy na serwer oraz N1tr0 B00ST za jedynie __25 PLN!__
+- \`🎬\` **⨯** **PLATFORMY VOD** - Netflix, HBO Max, Disney+ i inne - oglądaj taniej, bez ograniczeń!
+- \`📚\` **⨯** **NARZĘDZIA EDUKACYJNE** – K0nta ChatGPT, Odrabiamy oraz inne usługi pomocne w nauce czy pisaniu prac!
+- \`💸\` **⨯** **D0ŁADOWANIA DO GIER** - Nie przepłacaj u twórców - kupuj u nas, zawsze w dobrej cenie!
+- \`📢\` **⨯** **S0CIAL B00STING** - Obserwacje, polubienia i wyświetlenia na wielu platformach, rozwiń swoje profile!
+- \`🌍\` **⨯** **PRYWATNOŚĆ W SIECI** - Zakup odpowiedniego VPN - chroń swoją obecność w sieci!
+- \`📲\` **⨯**  **WERYFIKACJA SMS** - Szybkie numery tymczasowe do rejestracji wszędzie, gdzie potrzebujesz!
+- \`🏅\` **⨯**  **H4ZARD ONLINE** - Dla fanów obstawiania i gier losowych!
+## \`🛒\` **⨯ DOŁĄCZ DO NAS I KUPUJ W ŚWIETNYCH CENACH!**  
+\`👋\` **⨯ Do zobaczenia na serwerze!** 
+\`🔗\` [Dołącz teraz!](https://discord.gg/szybkizakup)`;
+
+const ad8 = `## Serwer gdzie tworzymy boty!
+> Hej chciałbyś na swoim discordzie mieć autorskiego bota gdzie wszystko jest **tak jak chcesz?** 
+* Benefity \`💻\`
+- **Szybki kontakt** \`📞\`
+- **Profesjonalizm** \`📋\`
+- **Szybki czas realizacji** \`⌛\`
+- **Pozytwne opinie** \`💚\`
+> Dołącz na naszego discorda już teraz!
+> https://discord.gg/dcboty`;
+
+const ALL_ADS = [ad1, ad2, ad3, ad4, ad5, ad6, ad7, ad8];
+
+// ===================== KANAŁY =====================
+
+const PARTNER_CHANNELS = [
+  '1442908672899547187',
+  '1487559123166822460',
+  '1485664071234621440',
+  '1476241698207043636',
+  '1455561797821141094',
+  '1449144356975149358',
+  '1429451429273141251',
+  '1296167863551529033',
+];
+
+const REMINDER_DELAY = 5 * 24 * 60 * 60 * 1000; // 5 dni
+
 const pendingRenewals = new Map();
+
+// ===================== FUNKCJE =====================
+
+function parseDateTime(timeStr, dateStr) {
+  // timeStr: "12:41", dateStr: "5.04.2026"
+  try {
+    const [hours, minutes] = timeStr.split(':').map(Number);
+    const [day, month, year] = dateStr.split('.').map(Number);
+    const date = new Date(year, month - 1, day, hours, minutes, 0, 0);
+    return date.getTime();
+  } catch (e) {
+    return null;
+  }
+}
 
 function startReminderChecker() {
   setInterval(async () => {
@@ -142,79 +257,100 @@ function startReminderChecker() {
   }, 10 * 1000);
 }
 
+// ===================== EVENTY =====================
+
 client.on('messageCreate', async (message) => {
-  // Tylko DM
   if (message.guild) return;
   if (message.createdTimestamp < botStartTime) return;
 
   const isMe = message.author.id === client.user.id;
   const content = message.content.trim();
 
-  // --- Komendy (tylko ja mogę je wpisywać) ---
   if (isMe) {
 
-    // !reklama — wyślij obie reklamy rozmówcy
+    // !reklama — wyślij wszystkie reklamy rozmówcy
     if (content === '!reklama') {
-      const channel = message.channel;
-      await channel.send(ad1);
-      await channel.send(ad2);
-      console.log(`[!reklama] Wysłano reklamy`);
+      for (const ad of ALL_ADS) {
+        await message.channel.send(ad);
+        await new Promise(r => setTimeout(r, 1500));
+      }
+      console.log(`[!reklama] Wysłano ${ALL_ADS.length} reklam`);
       return;
     }
 
-    // !wstaw — znajdź wszystkie wiadomości z discord.gg w tej rozmowie i wstaw na kanały
-    if (content === '!wstaw') {
-      const channel = message.channel;
-
-      // Pobierz historię wiadomości (max 100)
-      const messages = await channel.messages.fetch({ limit: 100 });
-      const ads = messages.filter(m =>
-        m.author.id !== client.user.id &&
-        m.content.includes('https://discord.gg/')
-      );
-
-      if (ads.size === 0) {
-        await channel.send("❕ Nie znalazłem żadnych wiadomości z linkiem discord.gg w tej rozmowie.");
+    // !wstaw HH:MM DD.MM.YYYY — wstaw reklamy od podanego czasu
+    if (content.startsWith('!wstaw')) {
+      const parts = content.split(' ');
+      // oczekiwany format: !wstaw 12:41 5.04.2026
+      if (parts.length !== 3) {
+        await message.channel.send("❕ Użycie: `!wstaw 12:41 5.04.2026`");
         return;
       }
 
-      // Wstaw każdą reklamę na oba kanały partnerskie
-      for (const partnerChannelId of PARTNER_CHANNELS) {
-        const partnerChannel = await client.channels.fetch(partnerChannelId).catch(() => null);
+      const fromTimestamp = parseDateTime(parts[1], parts[2]);
+      if (!fromTimestamp || isNaN(fromTimestamp)) {
+        await message.channel.send("❕ Nieprawidłowy format daty/godziny. Użyj: `!wstaw 12:41 5.04.2026`");
+        return;
+      }
+
+      const recipientId = message.channel.recipient?.id;
+      if (!recipientId) {
+        await message.channel.send("❕ Nie mogę określić rozmówcy.");
+        return;
+      }
+
+      // Pobierz historię wiadomości (max 100)
+      const messages = await message.channel.messages.fetch({ limit: 100 });
+
+      const ads = messages
+        .filter(m =>
+          m.author.id === recipientId &&
+          m.content.includes('https://discord.gg/') &&
+          m.createdTimestamp >= fromTimestamp
+        )
+        .sort((a, b) => a.createdTimestamp - b.createdTimestamp);
+
+      if (ads.size === 0) {
+        await message.channel.send(`❕ Nie znalazłem żadnych reklam od ${parts[2]} ${parts[1]}.`);
+        return;
+      }
+
+      // Wstaw na wszystkie kanały partnerskie
+      for (const channelId of PARTNER_CHANNELS) {
+        const partnerChannel = await client.channels.fetch(channelId).catch(() => null);
         if (!partnerChannel) {
-          console.error(`Nie znaleziono kanału ${partnerChannelId}`);
+          console.error(`Nie znaleziono kanału ${channelId}`);
           continue;
         }
-        for (const [, ad] of ads.reverse()) {
-          await partnerChannel.send(ad.content);
+        for (const [, ad] of ads) {
+          await partnerChannel.send(`${ad.content}\n\nPartnerstwo z: <@${recipientId}>`);
+          await new Promise(r => setTimeout(r, 1000));
         }
       }
 
-      await channel.send(`✅ Wstawiono ${ads.size} reklamę/reklamy na kanały partnerskie.`);
-      console.log(`[!wstaw] Wstawiono ${ads.size} reklam`);
+      await message.channel.send(`✅ Wstawiono ${ads.size} reklamę/reklamy (od ${parts[2]} ${parts[1]}) na ${PARTNER_CHANNELS.length} kanałów.`);
+      console.log(`[!wstaw] Wstawiono ${ads.size} reklam od ${parts[2]} ${parts[1]}`);
       return;
     }
 
     // !odnowa — zapytaj rozmówcę czy chce przypomnienie za 5 dni
     if (content === '!odnowa') {
-      const channel = message.channel;
-      const recipientId = channel.recipient?.id;
-
+      const recipientId = message.channel.recipient?.id;
       if (!recipientId) {
-        await channel.send("❕ Nie mogę określić rozmówcy.");
+        await message.channel.send("❕ Nie mogę określić rozmówcy.");
         return;
       }
 
       pendingRenewals.set(recipientId, true);
-      await channel.send("🔔 Czy chcesz za 5 dni znowu nawiązać partnerstwo? Wpisz **tak** lub **nie**.");
+      await message.channel.send("🔔 Czy chcesz za 5 dni znowu nawiązać partnerstwo? Wpisz **tak** lub **nie**.");
       console.log(`[!odnowa] Zapytano ${recipientId}`);
       return;
     }
 
-    return; // ignoruj inne wiadomości ode mnie
+    return;
   }
 
-  // --- Odpowiedź rozmówcy na !odnowa ---
+  // Odpowiedź rozmówcy na !odnowa
   if (pendingRenewals.has(message.author.id)) {
     const answer = content.toLowerCase();
 
